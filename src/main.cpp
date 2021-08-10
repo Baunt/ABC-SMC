@@ -15,7 +15,7 @@ int main() {
     //measurement
     int npix = 256;
     //TODO what means x??
-    std::vector<double> x = linspace(0,1, npix);
+    std::vector<double> simulatedSpectrum = linspace(0,1, npix);
 
     std::default_random_engine generator;
     std::normal_distribution<double> distribution(0.0, 1.0);
