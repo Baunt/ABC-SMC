@@ -33,10 +33,10 @@ NULL=nul
 SHELL = cmd.exe
 
 # The CMake executable.
-CMAKE_COMMAND = C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4037.2\bin\cmake\win\bin\cmake.exe
+CMAKE_COMMAND = C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4746.93\bin\cmake\win\bin\cmake.exe
 
 # The command to remove a file.
-RM = C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4037.2\bin\cmake\win\bin\cmake.exe -E rm -f
+RM = C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4746.93\bin\cmake\win\bin\cmake.exe -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
@@ -55,37 +55,79 @@ include CMakeFiles\ABC_SMC_Algorithm.dir\progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles\ABC_SMC_Algorithm.dir\flags.make
 
-CMakeFiles\ABC_SMC_Algorithm.dir\main.cpp.obj: CMakeFiles\ABC_SMC_Algorithm.dir\flags.make
-CMakeFiles\ABC_SMC_Algorithm.dir\main.cpp.obj: ..\main.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Diplomamunka\ABC_SMC_Algorithm\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/ABC_SMC_Algorithm.dir/main.cpp.obj"
+CMakeFiles\ABC_SMC_Algorithm.dir\src\main.cpp.obj: CMakeFiles\ABC_SMC_Algorithm.dir\flags.make
+CMakeFiles\ABC_SMC_Algorithm.dir\src\main.cpp.obj: ..\src\main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Diplomamunka\ABC_SMC_Algorithm\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/ABC_SMC_Algorithm.dir/src/main.cpp.obj"
 	C:\PROGRA~2\MIB055~1\2019\PROFES~1\VC\Tools\MSVC\1427~1.291\bin\Hostx86\x86\cl.exe @<<
- /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\ABC_SMC_Algorithm.dir\main.cpp.obj /FdCMakeFiles\ABC_SMC_Algorithm.dir\ /FS -c C:\Diplomamunka\ABC_SMC_Algorithm\main.cpp
+ /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\ABC_SMC_Algorithm.dir\src\main.cpp.obj /FdCMakeFiles\ABC_SMC_Algorithm.dir\ /FS -c C:\Diplomamunka\ABC_SMC_Algorithm\src\main.cpp
 <<
 
-CMakeFiles\ABC_SMC_Algorithm.dir\main.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ABC_SMC_Algorithm.dir/main.cpp.i"
-	C:\PROGRA~2\MIB055~1\2019\PROFES~1\VC\Tools\MSVC\1427~1.291\bin\Hostx86\x86\cl.exe > CMakeFiles\ABC_SMC_Algorithm.dir\main.cpp.i @<<
- /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Diplomamunka\ABC_SMC_Algorithm\main.cpp
+CMakeFiles\ABC_SMC_Algorithm.dir\src\main.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ABC_SMC_Algorithm.dir/src/main.cpp.i"
+	C:\PROGRA~2\MIB055~1\2019\PROFES~1\VC\Tools\MSVC\1427~1.291\bin\Hostx86\x86\cl.exe > CMakeFiles\ABC_SMC_Algorithm.dir\src\main.cpp.i @<<
+ /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Diplomamunka\ABC_SMC_Algorithm\src\main.cpp
 <<
 
-CMakeFiles\ABC_SMC_Algorithm.dir\main.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ABC_SMC_Algorithm.dir/main.cpp.s"
+CMakeFiles\ABC_SMC_Algorithm.dir\src\main.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ABC_SMC_Algorithm.dir/src/main.cpp.s"
 	C:\PROGRA~2\MIB055~1\2019\PROFES~1\VC\Tools\MSVC\1427~1.291\bin\Hostx86\x86\cl.exe @<<
- /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoNUL /FAs /FaCMakeFiles\ABC_SMC_Algorithm.dir\main.cpp.s /c C:\Diplomamunka\ABC_SMC_Algorithm\main.cpp
+ /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoNUL /FAs /FaCMakeFiles\ABC_SMC_Algorithm.dir\src\main.cpp.s /c C:\Diplomamunka\ABC_SMC_Algorithm\src\main.cpp
+<<
+
+CMakeFiles\ABC_SMC_Algorithm.dir\src\peak_model.cpp.obj: CMakeFiles\ABC_SMC_Algorithm.dir\flags.make
+CMakeFiles\ABC_SMC_Algorithm.dir\src\peak_model.cpp.obj: ..\src\peak_model.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Diplomamunka\ABC_SMC_Algorithm\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/ABC_SMC_Algorithm.dir/src/peak_model.cpp.obj"
+	C:\PROGRA~2\MIB055~1\2019\PROFES~1\VC\Tools\MSVC\1427~1.291\bin\Hostx86\x86\cl.exe @<<
+ /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\ABC_SMC_Algorithm.dir\src\peak_model.cpp.obj /FdCMakeFiles\ABC_SMC_Algorithm.dir\ /FS -c C:\Diplomamunka\ABC_SMC_Algorithm\src\peak_model.cpp
+<<
+
+CMakeFiles\ABC_SMC_Algorithm.dir\src\peak_model.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ABC_SMC_Algorithm.dir/src/peak_model.cpp.i"
+	C:\PROGRA~2\MIB055~1\2019\PROFES~1\VC\Tools\MSVC\1427~1.291\bin\Hostx86\x86\cl.exe > CMakeFiles\ABC_SMC_Algorithm.dir\src\peak_model.cpp.i @<<
+ /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Diplomamunka\ABC_SMC_Algorithm\src\peak_model.cpp
+<<
+
+CMakeFiles\ABC_SMC_Algorithm.dir\src\peak_model.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ABC_SMC_Algorithm.dir/src/peak_model.cpp.s"
+	C:\PROGRA~2\MIB055~1\2019\PROFES~1\VC\Tools\MSVC\1427~1.291\bin\Hostx86\x86\cl.exe @<<
+ /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoNUL /FAs /FaCMakeFiles\ABC_SMC_Algorithm.dir\src\peak_model.cpp.s /c C:\Diplomamunka\ABC_SMC_Algorithm\src\peak_model.cpp
+<<
+
+CMakeFiles\ABC_SMC_Algorithm.dir\src\util.cpp.obj: CMakeFiles\ABC_SMC_Algorithm.dir\flags.make
+CMakeFiles\ABC_SMC_Algorithm.dir\src\util.cpp.obj: ..\src\util.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Diplomamunka\ABC_SMC_Algorithm\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/ABC_SMC_Algorithm.dir/src/util.cpp.obj"
+	C:\PROGRA~2\MIB055~1\2019\PROFES~1\VC\Tools\MSVC\1427~1.291\bin\Hostx86\x86\cl.exe @<<
+ /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoCMakeFiles\ABC_SMC_Algorithm.dir\src\util.cpp.obj /FdCMakeFiles\ABC_SMC_Algorithm.dir\ /FS -c C:\Diplomamunka\ABC_SMC_Algorithm\src\util.cpp
+<<
+
+CMakeFiles\ABC_SMC_Algorithm.dir\src\util.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ABC_SMC_Algorithm.dir/src/util.cpp.i"
+	C:\PROGRA~2\MIB055~1\2019\PROFES~1\VC\Tools\MSVC\1427~1.291\bin\Hostx86\x86\cl.exe > CMakeFiles\ABC_SMC_Algorithm.dir\src\util.cpp.i @<<
+ /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Diplomamunka\ABC_SMC_Algorithm\src\util.cpp
+<<
+
+CMakeFiles\ABC_SMC_Algorithm.dir\src\util.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ABC_SMC_Algorithm.dir/src/util.cpp.s"
+	C:\PROGRA~2\MIB055~1\2019\PROFES~1\VC\Tools\MSVC\1427~1.291\bin\Hostx86\x86\cl.exe @<<
+ /nologo /TP $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) /FoNUL /FAs /FaCMakeFiles\ABC_SMC_Algorithm.dir\src\util.cpp.s /c C:\Diplomamunka\ABC_SMC_Algorithm\src\util.cpp
 <<
 
 # Object files for target ABC_SMC_Algorithm
 ABC_SMC_Algorithm_OBJECTS = \
-"CMakeFiles\ABC_SMC_Algorithm.dir\main.cpp.obj"
+"CMakeFiles\ABC_SMC_Algorithm.dir\src\main.cpp.obj" \
+"CMakeFiles\ABC_SMC_Algorithm.dir\src\peak_model.cpp.obj" \
+"CMakeFiles\ABC_SMC_Algorithm.dir\src\util.cpp.obj"
 
 # External object files for target ABC_SMC_Algorithm
 ABC_SMC_Algorithm_EXTERNAL_OBJECTS =
 
-ABC_SMC_Algorithm.exe: CMakeFiles\ABC_SMC_Algorithm.dir\main.cpp.obj
+ABC_SMC_Algorithm.exe: CMakeFiles\ABC_SMC_Algorithm.dir\src\main.cpp.obj
+ABC_SMC_Algorithm.exe: CMakeFiles\ABC_SMC_Algorithm.dir\src\peak_model.cpp.obj
+ABC_SMC_Algorithm.exe: CMakeFiles\ABC_SMC_Algorithm.dir\src\util.cpp.obj
 ABC_SMC_Algorithm.exe: CMakeFiles\ABC_SMC_Algorithm.dir\build.make
 ABC_SMC_Algorithm.exe: CMakeFiles\ABC_SMC_Algorithm.dir\objects1.rsp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=C:\Diplomamunka\ABC_SMC_Algorithm\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable ABC_SMC_Algorithm.exe"
-	C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4037.2\bin\cmake\win\bin\cmake.exe -E vs_link_exe --intdir=CMakeFiles\ABC_SMC_Algorithm.dir --rc=C:\PROGRA~2\WI3CF2~1\10\bin\100183~1.0\x86\rc.exe --mt=C:\PROGRA~2\WI3CF2~1\10\bin\100183~1.0\x86\mt.exe --manifests -- C:\PROGRA~2\MIB055~1\2019\PROFES~1\VC\Tools\MSVC\1427~1.291\bin\Hostx86\x86\link.exe /nologo @CMakeFiles\ABC_SMC_Algorithm.dir\objects1.rsp @<<
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=C:\Diplomamunka\ABC_SMC_Algorithm\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable ABC_SMC_Algorithm.exe"
+	C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4746.93\bin\cmake\win\bin\cmake.exe -E vs_link_exe --intdir=CMakeFiles\ABC_SMC_Algorithm.dir --rc=C:\PROGRA~2\WI3CF2~1\10\bin\100183~1.0\x86\rc.exe --mt=C:\PROGRA~2\WI3CF2~1\10\bin\100183~1.0\x86\mt.exe --manifests -- C:\PROGRA~2\MIB055~1\2019\PROFES~1\VC\Tools\MSVC\1427~1.291\bin\Hostx86\x86\link.exe /nologo @CMakeFiles\ABC_SMC_Algorithm.dir\objects1.rsp @<<
  /out:ABC_SMC_Algorithm.exe /implib:ABC_SMC_Algorithm.lib /pdb:C:\Diplomamunka\ABC_SMC_Algorithm\cmake-build-debug\ABC_SMC_Algorithm.pdb /version:0.0 /machine:X86 /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib 
 <<
 

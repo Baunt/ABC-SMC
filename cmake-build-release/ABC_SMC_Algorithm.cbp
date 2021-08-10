@@ -86,7 +86,19 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="C:/Diplomamunka/ABC_SMC_Algorithm/main.cpp">
+		<Unit filename="C:/Diplomamunka/ABC_SMC_Algorithm/src/main.cpp">
+			<Option target="ABC_SMC_Algorithm"/>
+		</Unit>
+		<Unit filename="C:/Diplomamunka/ABC_SMC_Algorithm/src/peak_model.cpp">
+			<Option target="ABC_SMC_Algorithm"/>
+		</Unit>
+		<Unit filename="C:/Diplomamunka/ABC_SMC_Algorithm/src/peak_model.h">
+			<Option target="ABC_SMC_Algorithm"/>
+		</Unit>
+		<Unit filename="C:/Diplomamunka/ABC_SMC_Algorithm/src/util.cpp">
+			<Option target="ABC_SMC_Algorithm"/>
+		</Unit>
+		<Unit filename="C:/Diplomamunka/ABC_SMC_Algorithm/src/util.h">
 			<Option target="ABC_SMC_Algorithm"/>
 		</Unit>
 		<Unit filename="C:/Diplomamunka/ABC_SMC_Algorithm/CMakeLists.txt">

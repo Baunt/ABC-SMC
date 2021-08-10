@@ -3,7 +3,7 @@ project(ABC_SMC_Algorithm)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(ABC_SMC_Algorithm main.cpp)
+add_executable(ABC_SMC_Algorithm src/main.cpp src/peak_model.h src/peak_model.cpp src/util.h src/util.cpp)
 
 set(EIGEN_DIR "./eigen-3.3.9")
 find_path(EIGEN_DIR NAMES signature_of_eigen3_matrix_library

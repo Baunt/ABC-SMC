@@ -37,10 +37,10 @@ NULL=nul
 SHELL = cmd.exe
 
 # The CMake executable.
-CMAKE_COMMAND = C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4037.2\bin\cmake\win\bin\cmake.exe
+CMAKE_COMMAND = C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4746.93\bin\cmake\win\bin\cmake.exe
 
 # The command to remove a file.
-RM = C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4037.2\bin\cmake\win\bin\cmake.exe -E rm -f
+RM = C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4746.93\bin\cmake\win\bin\cmake.exe -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
@@ -57,7 +57,7 @@ CMAKE_BINARY_DIR = C:\Diplomamunka\ABC_SMC_Algorithm\cmake-build-debug
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4037.2\bin\cmake\win\bin\cmake.exe -E echo "No interactive CMake dialog available."
+	C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4746.93\bin\cmake\win\bin\cmake.exe -E echo "No interactive CMake dialog available."
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -67,7 +67,7 @@ edit_cache\fast: edit_cache
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4037.2\bin\cmake\win\bin\cmake.exe --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4746.93\bin\cmake\win\bin\cmake.exe --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : rebuild_cache
 
 # Special rule for the target rebuild_cache
@@ -118,29 +118,77 @@ ABC_SMC_Algorithm\fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\build
 .PHONY : ABC_SMC_Algorithm\fast
 
-main.obj: main.cpp.obj
-.PHONY : main.obj
+src\main.obj: src\main.cpp.obj
+.PHONY : src\main.obj
 
 # target to build an object file
-main.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\main.cpp.obj
-.PHONY : main.cpp.obj
+src\main.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\src\main.cpp.obj
+.PHONY : src\main.cpp.obj
 
-main.i: main.cpp.i
-.PHONY : main.i
+src\main.i: src\main.cpp.i
+.PHONY : src\main.i
 
 # target to preprocess a source file
-main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\main.cpp.i
-.PHONY : main.cpp.i
+src\main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\src\main.cpp.i
+.PHONY : src\main.cpp.i
 
-main.s: main.cpp.s
-.PHONY : main.s
+src\main.s: src\main.cpp.s
+.PHONY : src\main.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\main.cpp.s
-.PHONY : main.cpp.s
+src\main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\src\main.cpp.s
+.PHONY : src\main.cpp.s
+
+src\peak_model.obj: src\peak_model.cpp.obj
+.PHONY : src\peak_model.obj
+
+# target to build an object file
+src\peak_model.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\src\peak_model.cpp.obj
+.PHONY : src\peak_model.cpp.obj
+
+src\peak_model.i: src\peak_model.cpp.i
+.PHONY : src\peak_model.i
+
+# target to preprocess a source file
+src\peak_model.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\src\peak_model.cpp.i
+.PHONY : src\peak_model.cpp.i
+
+src\peak_model.s: src\peak_model.cpp.s
+.PHONY : src\peak_model.s
+
+# target to generate assembly for a file
+src\peak_model.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\src\peak_model.cpp.s
+.PHONY : src\peak_model.cpp.s
+
+src\util.obj: src\util.cpp.obj
+.PHONY : src\util.obj
+
+# target to build an object file
+src\util.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\src\util.cpp.obj
+.PHONY : src\util.cpp.obj
+
+src\util.i: src\util.cpp.i
+.PHONY : src\util.i
+
+# target to preprocess a source file
+src\util.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\src\util.cpp.i
+.PHONY : src\util.cpp.i
+
+src\util.s: src\util.cpp.s
+.PHONY : src\util.s
+
+# target to generate assembly for a file
+src\util.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ABC_SMC_Algorithm.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\ABC_SMC_Algorithm.dir\src\util.cpp.s
+.PHONY : src\util.cpp.s
 
 # Help Target
 help:
@@ -151,9 +199,15 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... ABC_SMC_Algorithm
-	@echo ... main.obj
-	@echo ... main.i
-	@echo ... main.s
+	@echo ... src/main.obj
+	@echo ... src/main.i
+	@echo ... src/main.s
+	@echo ... src/peak_model.obj
+	@echo ... src/peak_model.i
+	@echo ... src/peak_model.s
+	@echo ... src/util.obj
+	@echo ... src/util.i
+	@echo ... src/util.s
 .PHONY : help
 
 
