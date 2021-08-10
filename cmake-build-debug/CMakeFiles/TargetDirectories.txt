@@ -1,3 +1,0 @@
-C:/Diplomamunka/ABC_SMC_Algorithm/cmake-build-debug/CMakeFiles/ABC_SMC_Algorithm.dir
-C:/Diplomamunka/ABC_SMC_Algorithm/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Diplomamunka/ABC_SMC_Algorithm/cmake-build-debug/CMakeFiles/rebuild_cache.dir
