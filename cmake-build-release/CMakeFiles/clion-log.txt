@@ -1,4 +1,0 @@
-C:\Users\balint.galgoczi\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\212.4746.93\bin\cmake\win\bin\cmake.exe -DCMAKE_BUILD_TYPE=Release -DCMAKE_DEPENDS_USE_COMPILER=FALSE -G "CodeBlocks - NMake Makefiles" C:\Diplomamunka\ABC_SMC_Algorithm
--- Configuring done
--- Generating done
--- Build files have been written to: C:/Diplomamunka/ABC_SMC_Algorithm/cmake-build-release
