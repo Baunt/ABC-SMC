@@ -7,6 +7,9 @@
 
 #include <iostream>
 #include <vector>
+#include <random>
+
+std::vector<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues);
 
 template<typename T> std::vector<double> linspace(T start_in, T end_in, int num_in){
 

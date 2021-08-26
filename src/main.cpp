@@ -1,5 +1,6 @@
 #include "util.h"
-#include <random>
+#include "peak_model.h"
+#include "matplotlibcpp.h"
 
 int main() {
 
@@ -14,19 +15,26 @@ int main() {
 
     //measurement
     int npix = 256;
-    //TODO what means x??
-    std::vector<double> simulatedSpectrum = linspace(0,1, npix);
+    std::vector<double> x = linspace(0, 1, npix);
 
-    std::default_random_engine generator;
-    std::normal_distribution<double> distribution(0.0, 1.0);
-    int noise[256]={};
+    std::vector<double> noise = getDistribution(0.0, 1.0, npix);
 
-    for (int i=0; i<npix; ++i) {
-        double number = distribution(generator);
-        if ((number>=0.0)&&(number<npix)) ++noise[int(number)];
+    PeakModel gaussianPeakModel = PeakModel(x, real_x0, real_fwhm0, real_intensity0);
+    std::vector<double> gaussianModel = gaussianPeakModel.Gaussian();
+
+    PeakModel lorentzianPeakModel = PeakModel(x, real_x1, real_fwhm1, real_intensity1);
+    std::vector<double> lorentzianModel = gaussianPeakModel.Lorenzt();
+
+    std::vector<double> real_y(256);
+    for (int i = 0; i < gaussianModel.capacity(); ++i) {
+        real_y[i] = gaussianModel[i] + lorentzianModel[i];
     }
 
+    for (int i = 0; i < real_y.capacity(); ++i) {
+        real_y[i] += noise[i];
+    }
 
+    matplotlibcpp::plot(real_y);
 
     return 0;
 }

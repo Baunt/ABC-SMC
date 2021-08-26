@@ -3,6 +3,7 @@
 ## Installation
 
 ## Documentation
+Simplest C++ plotting library --> [matplotlib-cpp](https://github.com/lava/matplotlib-cpp) 
 
 ## TODO
 
