@@ -1,9 +1,17 @@
 cmake_minimum_required(VERSION 3.0)
 project(ABC_SMC_Algorithm)
-
 set(CMAKE_CXX_STANDARD 14)
 
+option(ABC_SMC_Algorithm_MATLABPLOTCPP "Build ${PROJECT_NAME} and the projects it depends on." ON)
+
+if(ABC_SMC_Algorithm_MATLABPLOTCPP)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/include/third-party-library/matplotlib-cpp/CMakeLists.txt")
+endif()
+
+
 add_executable(ABC_SMC_Algorithm src/main.cpp src/peak_model.h src/peak_model.cpp src/util.h src/util.cpp)
+target_link_libraries(ABC_SMC_Algorithm PRIVATE matplotlib_cpp)
+set_target_properties(ABC_SMC_Algorithm PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 set(EIGEN_DIR "./eigen-3.3.9")
 find_path(EIGEN_DIR NAMES signature_of_eigen3_matrix_library
