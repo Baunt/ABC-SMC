@@ -1,6 +1,6 @@
 #include "util.h"
 #include "peak_model.h"
-#include "matplotlibcpp.h"
+#include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
 
 int main() {
 
@@ -35,6 +35,6 @@ int main() {
     }
 
     matplotlibcpp::plot(real_y);
-
+    matplotlibcpp::show();
     return 0;
 }
