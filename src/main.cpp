@@ -19,10 +19,10 @@ int main() {
 
     std::vector<double> noise = getDistribution(0.0, 1.0, npix);
 
-    PeakModel gaussianPeakModel = PeakModel(x, real_x0, real_fwhm0, real_intensity0);
+    PeakModel gaussianPeakModel = PeakModel(x, real_x0, real_fwhm0, real_intensity0, npix);
     std::vector<double> gaussianModel = gaussianPeakModel.Gaussian();
 
-    PeakModel lorentzianPeakModel = PeakModel(x, real_x1, real_fwhm1, real_intensity1);
+    PeakModel lorentzianPeakModel = PeakModel(x, real_x1, real_fwhm1, real_intensity1, npix);
     std::vector<double> lorentzianModel = gaussianPeakModel.Lorenzt();
 
     std::vector<double> real_y(256);

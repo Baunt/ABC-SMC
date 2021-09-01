@@ -13,17 +13,23 @@ private:
     double p_x0;
     double p_fwhm;
     double p_intensity;
+    double p_npix;
 public:
     std::vector<double> Gaussian();
 
+    std::vector<double> GaussianNonOptimized();
+
     std::vector<double> Lorenzt();
 
-    PeakModel(std::vector<double> x, double x0, double fwhm, double intensity)
+    std::vector<double> LorenztNonOptimized();
+
+    PeakModel(std::vector<double> x, double x0, double fwhm, double intensity, int npix)
     {
         p_x = x;
         p_x0 = x0;
         p_fwhm = fwhm;
         p_intensity = intensity;
+        p_npix = npix;
     }
 };
 

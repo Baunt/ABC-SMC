@@ -55,22 +55,46 @@ std::vector<double> divideValueFromVector(double value, std::vector<double> vect
     return vector;
 }
 
-std::vector<double> PeakModel::Gaussian() {
+std::vector<double> divideVectorFromValue(double value, std::vector<double> vector){
+    std::vector<double> dividedVector(vector.capacity(), value);
+    for (int i = 0; i < vector.capacity(); ++i) {
+        dividedVector[i] /= vector[i];
+    }
+
+    return dividedVector;
+}
+
+
+std::vector<double> PeakModel::GaussianNonOptimized() {
 
     double sigma = abs(p_fwhm) / 2.35482;
-    double c0 = 1 / pow(sigma*(2* M_PI), 0.5);
-    double c1 = 1 / (0.5 / pow(sigma, 2));
+    double c0 = 1 / (sigma * pow(2 * M_PI, 0.5));
+    double c1 = 0.5 / pow(sigma, 2);
 
     std::vector<double> spectrum = subtractValueFromVector(p_x0, p_x);
     spectrum = squaredVector(spectrum);
-    spectrum = subtractValueFromVector(-c1, spectrum);
+    spectrum = multiplyValueFromVector(-c1, spectrum);
     spectrum = exponentVector(spectrum);
     spectrum = multiplyValueFromVector(p_intensity * c0, spectrum);
 
     return spectrum;
 }
 
-std::vector<double> PeakModel::Lorenzt() {
+std::vector<double> PeakModel::Gaussian()
+{    
+    std::vector<double> spectrum(p_npix, 0.0);
+    double sigma = abs(p_fwhm) / 2.35482;
+    double c0 = p_intensity / sigma * pow((2* M_PI), 0.5) ;
+    double c1 = 0.5 / (sigma * sigma);
+
+    for (int i = 0; i < p_npix; ++i)
+    {
+        spectrum[i] = c0 * exp(-c1 * (p_x[i] - p_x0) * (p_x[i] - p_x0));
+    }
+    return spectrum;
+}
+
+std::vector<double> PeakModel::LorenztNonOptimized() {
 
     double gamma = abs(p_fwhm) / 2;
 
@@ -79,7 +103,20 @@ std::vector<double> PeakModel::Lorenzt() {
     spectrum = squaredVector(spectrum);
     spectrum = addValueFromVector(1.0, spectrum);
     spectrum = multiplyValueFromVector(gamma * M_PI, spectrum);
-    spectrum = divideValueFromVector(p_intensity, spectrum);
+    spectrum = divideVectorFromValue(p_intensity, spectrum);
+
+    return spectrum;
+}
+
+std::vector<double> PeakModel::Lorenzt() {
+    std::vector<double> spectrum(p_npix, 0.0);
+
+    double gamma = abs(p_fwhm) / 2;
+    double inverseGamma = 1 / gamma;
+
+    for (int i = 0; i < p_npix; ++i) {
+        spectrum[i] = p_intensity / (gamma * M_PI * (1.0 + ((p_x[i] - p_x0) * inverseGamma) * ((p_x[i] - p_x0) * inverseGamma)));
+    }
 
     return spectrum;
 }
