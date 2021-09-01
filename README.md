@@ -5,6 +5,7 @@
 2. Use x64 architecture if you build C++
 ## Documentation
 Simplest C++ plotting library --> [matplotlib-cpp](https://github.com/lava/matplotlib-cpp)
+
 ##Tips and Tricks
 
 [Measure execution time with high precision](https://www.geeksforgeeks.org/measure-execution-time-with-high-precision-in-c-c/)
