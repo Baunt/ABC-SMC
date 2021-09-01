@@ -4,10 +4,10 @@
 1. Required python in the system at least the 3 version. If you install python do not miss to adding into the environment variables. Also required to install matplotlib: ```pip install matplotlib```
 2. Use x64 architecture if you build C++
 ## Documentation
-Simplest C++ plotting library --> [matplotlib-cpp](https://github.com/lava/matplotlib-cpp) 
-
+Simplest C++ plotting library --> [matplotlib-cpp](https://github.com/lava/matplotlib-cpp)
 
 #Tips and Tricks
+
 [Measure execution time with high precision](https://www.geeksforgeeks.org/measure-execution-time-with-high-precision-in-c-c/)
 
 [Computational complexity of mathematical operations](https://en.wikipedia.org/wiki/Computational_complexity_of_mathematical_operations)
