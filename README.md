@@ -5,7 +5,6 @@
 2. Use x64 architecture if you build C++
 ## Documentation
 Simplest C++ plotting library --> [matplotlib-cpp](https://github.com/lava/matplotlib-cpp)
-
 ##Tips and Tricks
 
 [Measure execution time with high precision](https://www.geeksforgeeks.org/measure-execution-time-with-high-precision-in-c-c/)
@@ -20,7 +19,7 @@ Simplest C++ plotting library --> [matplotlib-cpp](https://github.com/lava/matpl
 |Division        |*O(n^2)*
 
 - Combine constants where we can
-- Instead of use simple math expression like from math library for example pow(x,2) use x*x. Integer quotient use like x*x*x*x. Not cute but effective. 
+- Instead of use simple math expression like from math library for example pow(x,2) use ```x*x```. Integer quotient use like ```x*x*x*x```. Not cute but effective. 
 - Instead of dividing use the inverse of denominator like 
 ```vector[i] / constant --> vector[i] * constatn2 where constant2 = 1.0 / constatnt1```
 
