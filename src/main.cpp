@@ -1,6 +1,7 @@
 #include "util.h"
 #include "peak_model.h"
 #include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
+#include "concrete_spectrum_model.h"
 
 int main() {
 
@@ -34,7 +35,13 @@ int main() {
         real_y[i] += noise[i];
     }
 
-    matplotlibcpp::plot(real_y);
-    matplotlibcpp::show();
+//    matplotlibcpp::plot(real_y);
+//    matplotlibcpp::show();
+
+    ConcreteSpectrumModel* builder = new ConcreteSpectrumModel();
+    builder->Reset();
+    builder->GaussianModel();
+
+
     return 0;
 }

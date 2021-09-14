@@ -9,7 +9,15 @@ if(ABC_SMC_Algorithm_MATLABPLOTCPP)
 endif()
 
 
-add_executable(ABC_SMC_Algorithm src/main.cpp src/peak_model.h src/peak_model.cpp src/util.h src/util.cpp)
+add_executable(ABC_SMC_Algorithm
+        src/main.cpp
+        src/peak_model.h
+        src/peak_model.cpp
+        src/util.h src/util.cpp
+        src/concrete_spectrum_model.cpp
+        src/concrete_spectrum_model.h
+        src/spectrum_model.cpp
+        src/spectrum_model.h)
 target_link_libraries(ABC_SMC_Algorithm PRIVATE matplotlib_cpp)
 set_target_properties(ABC_SMC_Algorithm PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
