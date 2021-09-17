@@ -15,8 +15,8 @@ public:
     ~ConcreteSpectrumModel();
     void Reset();
     SpectrumModel* GetSpectrumModel();
-    void GaussianModel();
-    void LorentzianModel();
+    void GaussianModel(spectrum_model_parameters modelParameters);
+    void LorentzianModel(spectrum_model_parameters modelParameters);
 };
 
 #endif //MATPLOTLIB_CPP_CONCRETE_SPECTRUM_MODEL_H

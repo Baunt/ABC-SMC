@@ -3,6 +3,7 @@
 #include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
 #include "concrete_spectrum_model.h"
 
+
 int main() {
 
     //peak 1
@@ -37,11 +38,18 @@ int main() {
 
 //    matplotlibcpp::plot(real_y);
 //    matplotlibcpp::show();
+    auto* builder = new ConcreteSpectrumModel();
 
-    ConcreteSpectrumModel* builder = new ConcreteSpectrumModel();
-    builder->Reset();
-    builder->GaussianModel();
+    SpectrumModelParameters.x = linspace(0,1,npix);
+    SpectrumModelParameters.x0 = real_x0;
+    SpectrumModelParameters.fwhm = real_fwhm0;
+    SpectrumModelParameters.intensity = real_intensity0;
+    builder->GaussianModel(SpectrumModelParameters);
 
-
+    SpectrumModelParameters.x = linspace(0,1,npix);
+    SpectrumModelParameters.x0 = real_x0;
+    SpectrumModelParameters.fwhm = real_fwhm0;
+    SpectrumModelParameters.intensity = real_intensity0;
+    builder->LorentzianModel(SpectrumModelParameters);
     return 0;
 }

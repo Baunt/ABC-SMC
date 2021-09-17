@@ -4,6 +4,8 @@
 
 #include "concrete_spectrum_model.h"
 
+#include <utility>
+
 ConcreteSpectrumModel::ConcreteSpectrumModel(){
     this->Reset();
 }
@@ -16,12 +18,12 @@ void ConcreteSpectrumModel::Reset(){
     this->spectrumModel = new SpectrumModel();
 }
 
-void ConcreteSpectrumModel::GaussianModel(){
-    this->spectrumModel->Gaussian();
+void ConcreteSpectrumModel::GaussianModel(spectrum_model_parameters modelParameters){
+    this->spectrumModel->Gaussian(std::move(modelParameters));
 }
 
-void ConcreteSpectrumModel::LorentzianModel(){
-    this->spectrumModel->Lorentz();
+void ConcreteSpectrumModel::LorentzianModel(spectrum_model_parameters modelParameters){
+    this->spectrumModel->Lorentz(std::move(modelParameters));
 }
 
 SpectrumModel* ConcreteSpectrumModel::GetSpectrumModel(){

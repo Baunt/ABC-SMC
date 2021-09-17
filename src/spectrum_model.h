@@ -5,19 +5,21 @@
 #ifndef MATPLOTLIB_CPP_SPECTRUM_MODEL_H
 #define MATPLOTLIB_CPP_SPECTRUM_MODEL_H
 
-
 #include <vector>
 
+struct spectrum_model_parameters{
+    std::vector<double> x;
+    double x0;
+    double fwhm;
+    double intensity;
+    double npix;
+}SpectrumModelParameters;
+
+
 class SpectrumModel{
-private:
-    std::vector<double> p_x;
-    double p_x0;
-    double p_fwhm;
-    double p_intensity;
-    double p_npix;
 public:
-    std::vector<double> Gaussian();
-    std::vector<double> Lorentz();
+    std::vector<double> Gaussian(spectrum_model_parameters modelParameters);
+    std::vector<double> Lorentz(spectrum_model_parameters modelParameters);
 };
 
 #endif //MATPLOTLIB_CPP_SPECTRUM_MODEL_H
