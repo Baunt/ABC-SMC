@@ -37,4 +37,6 @@ template<typename T> std::vector<double> linspace(T start_in, T end_in, int num_
     return linspaced;
 }
 
+std::vector<std::vector<float>> transpose(const std::vector<std::vector<float>> &m);
+
 #endif //ABC_SMC_ALGORITHM_UTIL_H
