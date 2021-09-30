@@ -56,11 +56,12 @@ int main() {
     std::vector<double> priors(draws);
     std::vector<std::vector<double>> posteriors( draws , std::vector<double> (nparams, 0));
 
-    /* [ 0 0 0 0 0 0 ]
-       [ 0 0 0 0 0 0 ]
-       [ 0 0 0 0 0 0 ]
-       [ 0 0 0 0 0 0 ]
-       [ 0 0 0 0 0 0 ]
+    /*   x0 fwhm0 int0 x1 fwhm1 int2
+       [ 0    0    0   0    0    0 ]
+       [ 0    0    0   0    0    0 ]
+       [ 0    0    0   0    0    0 ]
+       [ 0    0    0   0    0    0 ]
+       [ 0    0    0   0    0    0 ]
 
        Posteriors vector:
        columns = nparams
@@ -110,19 +111,22 @@ int main() {
     std::vector<std::vector<double>> init_population = transpose(transposedPosterior);
     std::vector<double> likelihoods(draws, 0);
 
+    matplotlibcpp::plot(real_y);
 //    'A kezdeti populacionak kiszamoljuk a logp es likelihood_logp ertekeit.'
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < draws; ++i) {
         for (int j = 0; j < posteriors[i].capacity(); ++j) {
             priors[i] += normalDistribution[j].LogP(init_population[i][j]);
         }
 
-        PeakModel gaussModel = PeakModel(x, normalDistribution[0].expected_value, normalDistribution[1].expected_value, normalDistribution[2].expected_value, npix);
-        std::vector<double> gauss = gaussianPeakModel.Gaussian();
-        PeakModel lorentzModel = PeakModel(x, normalDistribution[3].expected_value, normalDistribution[4].expected_value, normalDistribution[5].expected_value, npix);
-        std::vector<double> lorentz = gaussianPeakModel.Lorenzt();
+        PeakModel gaussModel = PeakModel(x, init_population[i][0], init_population[i][1], init_population[i][2], npix);
+        std::vector<double> gauss = gaussModel.Gaussian();
+        PeakModel lorentzModel = PeakModel(x, init_population[i][3], init_population[i][4], init_population[i][5], npix);
+        std::vector<double> lorentz = lorentzModel.Lorenzt();
         for (int i = 0; i < gauss.capacity(); ++i) {
             y_sim[i] = gauss[i] + lorentz[i];
         }
+
+        matplotlibcpp::plot(y_sim);
 
         std::vector<double> spectrumDiffs(256);
         for (int j = 0; j < real_y.capacity(); ++j) {
@@ -133,6 +137,8 @@ int main() {
 
         likelihoods[i] = (-(mean_abs_error * mean_abs_error) / epsilon * epsilon + log(1 / (2 * M_PI * epsilon * epsilon))) / 2.0;
     }
+
+    matplotlibcpp::show();
 
     return 0;
 }
