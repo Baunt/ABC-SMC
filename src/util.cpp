@@ -25,12 +25,12 @@ std::vector<double> getDistribution(double x_mu, double x_sigma, size_t numberOf
     return result;
 }
 
-std::vector<std::vector<float>> transpose(const std::vector<std::vector<float>> &m)
+std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>> &m)
 {
-    std::vector<std::vector<float>> result(m[0].size(), std::vector<float>(m.size()));
+    std::vector<std::vector<double>> result(m[0].size(), std::vector<double>(m.size()));
 
-    for (std::vector<float>::size_type i(0); i < m[0].size(); ++i)
-        for (std::vector<float>::size_type j(0); j < m.size(); ++j)
+    for (std::vector<double>::size_type i(0); i < m[0].size(); ++i)
+        for (std::vector<double>::size_type j(0); j < m.size(); ++j)
             result[i][j] = m[j][i];
 
     return result;

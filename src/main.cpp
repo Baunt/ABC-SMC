@@ -49,8 +49,8 @@ int main() {
     int draws = 1000;
     double epsilon = 0.01;
 
-    std::vector<float> priors(draws);
-    std::vector<std::vector<float>> posteriors( draws , std::vector<float> (nparams, 0));
+    std::vector<double> priors(draws);
+    std::vector<std::vector<double>> posteriors( draws , std::vector<double> (nparams, 0));
 
     /* [ 0 0 0 0 0 0 ]
        [ 0 0 0 0 0 0 ]
@@ -64,12 +64,12 @@ int main() {
      * */
 
     int stage = 0;
-    float beta = 0.0;
+    double beta = 0.0;
     int marginal_likelihood = 1;
-    float threshold=0.5;
-    float acc_rate = 1.0;
+    double threshold=0.5;
+    double acc_rate = 1.0;
     int n_steps = 25;
-    float p_acc_rate=0.99;
+    double p_acc_rate=0.99;
     bool tune_steps= true;
     int max_steps = n_steps;
     int dimension = nparams;
@@ -95,20 +95,16 @@ int main() {
     'A modell parameterekhez tartozo eloszlasokbol (ebben a kodban csak NormalDistribution opcio van) veszunk'
     ' "draws" darab mintat '*/
 
-    //print(x2[:, 0])  # first column of x2
-//    for i, _dist in enumerate(distributions):
-//    posterior[:, i] = _dist.sample(draws)
-
-    std::vector<std::vector<float>> transposedPosterior = transpose(posteriors);
+    std::vector<std::vector<double>> transposedPosterior = transpose(posteriors);
 
     for (int i = 0; i < normalDistribution.capacity(); ++i) {
-
+        for (int j = 0; j < normalDistribution[i].Sample(draws).capacity(); ++j) {
+            transposedPosterior[i][j] = normalDistribution[i].Sample(draws)[j];
+        }
     }
 
-
-//    init_population = posterior
-//
-//    likelihoods = np.zeros(draws, dtype=float)
+    std::vector<std::vector<double>> init_population = transpose(transposedPosterior);
+    std::vector<double> likelihoods(draws, 0);
 
     return 0;
 }

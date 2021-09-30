@@ -15,9 +15,9 @@ template<typename T> std::vector<double> linspace(T start_in, T end_in, int num_
 
     std::vector<double> linspaced;
 
-    double start = static_cast<double>(start_in);
-    double end = static_cast<double>(end_in);
-    double num = static_cast<double>(num_in);
+    auto start = static_cast<double>(start_in);
+    auto end = static_cast<double>(end_in);
+    auto num = static_cast<double>(num_in);
 
     if (num == 0) { return linspaced; }
     if (num == 1)
@@ -37,6 +37,6 @@ template<typename T> std::vector<double> linspace(T start_in, T end_in, int num_
     return linspaced;
 }
 
-std::vector<std::vector<float>> transpose(const std::vector<std::vector<float>> &m);
+std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>> &m);
 
 #endif //ABC_SMC_ALGORITHM_UTIL_H
