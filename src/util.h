@@ -39,4 +39,6 @@ template<typename T> std::vector<double> linspace(T start_in, T end_in, int num_
 
 std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>> &m);
 
+double arithmetic_mean(const std::vector<double> &vector);
+
 #endif //ABC_SMC_ALGORITHM_UTIL_H

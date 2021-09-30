@@ -35,3 +35,13 @@ std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>
 
     return result;
 }
+
+double arithmetic_mean(const std::vector<double> &vector){
+    double sum = 0;
+    for (int i = 0; i < vector.capacity(); i++)
+    {
+        sum += vector[i];
+    }
+
+    return sum / vector.capacity();
+}

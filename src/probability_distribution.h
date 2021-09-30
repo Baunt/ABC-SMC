@@ -13,15 +13,16 @@ class ProbabilityDistribution {
 private:
     std::string p_name;
     std::string p_distributionType;
-    double p_expected_value;
-    double p_uncertainty;
 
 public:
+    double expected_value;
+    double uncertainty;
+
     ProbabilityDistribution(std::string name, std::string distributionType, double expectedValue, double uncertainty){
         this->p_distributionType = distributionType;
         this->p_name = name;
-        this->p_expected_value = expectedValue;
-        this->p_uncertainty = uncertainty;
+        this->expected_value = expectedValue;
+        this->uncertainty = uncertainty;
     }
 };
 

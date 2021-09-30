@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+
 #include "util.h"
 #include "peak_model.h"
 #include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
@@ -14,6 +16,9 @@ int main() {
     double real_fwhm1 = 0.20;
     double real_intensity1 = 0.5;
 
+    std::vector<double> real_y(256);
+    std::vector<double> y_sim(256);
+
     //simulated spectrum
     int npix = 256;
     std::vector<double> x = linspace(0, 1, npix);
@@ -26,7 +31,6 @@ int main() {
     PeakModel lorentzianPeakModel = PeakModel(x, real_x1, real_fwhm1, real_intensity1, npix);
     std::vector<double> lorentzianModel = gaussianPeakModel.Lorenzt();
 
-    std::vector<double> real_y(256);
     for (int i = 0; i < gaussianModel.capacity(); ++i) {
         real_y[i] = gaussianModel[i] + lorentzianModel[i];
     }
@@ -105,6 +109,30 @@ int main() {
 
     std::vector<std::vector<double>> init_population = transpose(transposedPosterior);
     std::vector<double> likelihoods(draws, 0);
+
+//    'A kezdeti populacionak kiszamoljuk a logp es likelihood_logp ertekeit.'
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 0; j < posteriors[i].capacity(); ++j) {
+            priors[i] += normalDistribution[j].LogP(init_population[i][j]);
+        }
+
+        PeakModel gaussModel = PeakModel(x, normalDistribution[0].expected_value, normalDistribution[1].expected_value, normalDistribution[2].expected_value, npix);
+        std::vector<double> gauss = gaussianPeakModel.Gaussian();
+        PeakModel lorentzModel = PeakModel(x, normalDistribution[3].expected_value, normalDistribution[4].expected_value, normalDistribution[5].expected_value, npix);
+        std::vector<double> lorentz = gaussianPeakModel.Lorenzt();
+        for (int i = 0; i < gauss.capacity(); ++i) {
+            y_sim[i] = gauss[i] + lorentz[i];
+        }
+
+        std::vector<double> spectrumDiffs(256);
+        for (int j = 0; j < real_y.capacity(); ++j) {
+            spectrumDiffs[j] = abs(real_y[j] - y_sim[j]);
+        }
+
+        double mean_abs_error = arithmetic_mean(spectrumDiffs);
+
+        likelihoods[i] = (-(mean_abs_error * mean_abs_error) / epsilon * epsilon + log(1 / (2 * M_PI * epsilon * epsilon))) / 2.0;
+    }
 
     return 0;
 }
