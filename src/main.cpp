@@ -1,5 +1,5 @@
 #define _USE_MATH_DEFINES
-
+#include <iomanip>
 #include "util.h"
 #include "peak_model.h"
 #include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
@@ -137,6 +137,152 @@ int main() {
 
         likelihoods[i] = (-(mean_abs_error * mean_abs_error) / epsilon * epsilon + log(1 / (2 * M_PI * epsilon * epsilon))) / 2.0;
     }
+
+    //    'Itt kezdodik az iteracio'
+    while (beta < 1){
+        std::cout << std::setprecision(5) << "Stage: " << stage << std::endl;
+        std::cout << std::setprecision(5) << "Beta: " << beta << std::endl;
+        std::cout << std::setprecision(5) << "Steps: " << n_steps << std::endl;
+        std::cout << std::setprecision(5) << "Accelerate: " << acc_rate << std::endl;
+
+        double lowBeta = beta;
+        double oldBeta = beta;
+        double upBeta = 2.0;
+        double newBeta;
+
+        double rN = likelihoods.capacity() * threshold;
+
+        std::vector<double> ll_diffs(likelihoods.capacity());
+        double max = *max_element(likelihoods.begin(), likelihoods.end());
+        for (int i = 0; i < likelihoods.capacity(); ++i) {
+            ll_diffs[i] = likelihoods[i] - max;
+        }
+
+//    ' ___________________________________________'
+//    ' |                                         |'
+//    ' | Fontossagi sulyok es beta meghatarozasa |'
+//    ' |_________________________________________|'
+
+        std::vector<double> weights_un(ll_diffs.capacity());
+        std::vector<double> weights(ll_diffs.capacity());
+
+        while ((upBeta - lowBeta) > 1e-6 ){
+            double sum_of_weights_un = 0;
+            double sum_of_weights = 0;
+            newBeta = (lowBeta + upBeta) / 2.0;
+
+            for (int i = 0; i < ll_diffs.capacity(); ++i) {
+                weights_un[i] = exp((newBeta - oldBeta) * ll_diffs[i]);
+                sum_of_weights_un += weights_un[i];
+            }
+
+            for (int i = 0; i < weights_un.capacity(); ++i) {
+                weights[i] = weights_un[i] / sum_of_weights_un;
+                sum_of_weights += weights[i] * weights[i];
+            }
+
+            double ESS = 1 / sum_of_weights;
+            if (ESS == rN){
+                break;
+            }
+            else if(ESS < rN){
+                upBeta = newBeta;
+            }
+            else{
+                lowBeta = newBeta;
+            }
+        }
+
+        if (newBeta >= 1){
+            double sum_of_weights_un = 0;
+            newBeta = 1;
+
+            for (int i = 0; i < ll_diffs.capacity(); ++i) {
+                weights_un[i] = exp((newBeta - oldBeta) * ll_diffs[i]);
+                sum_of_weights_un += weights_un[i];
+            }
+
+            for (int i = 0; i < weights_un.capacity(); ++i) {
+                weights[i] = weights_un[i] / sum_of_weights_un;
+            }
+        }
+
+        //marginal_likelihood????
+
+        beta = newBeta;
+
+//    ' ______________________________________________'
+//    ' |                                            |'
+//    ' | Mintavetelezes a fontossagi sulyok alapjan |'
+//    ' |____________________________________________|'
+
+
+
+//       resampling_indexes = np.random.choice(np.arange(draws), size=draws, p=weights) # veletlen valasztas, implementalni kell...
+//            posterior = posterior[resampling_indexes]
+//    priors = priors[resampling_indexes]
+//    likelihoods = likelihoods[resampling_indexes]
+//    tempered_logp = priors + likelihoods * beta
+//    acc_per_chain = acc_per_chain[resampling_indexes]
+//    scalings = scalings[resampling_indexes]
+
+
+    }
+
+
+
+//#region update_proposal
+//#  === smc.update_proposal() ==================================================================
+//       cov = np.cov(posterior, bias=False, rowvar=0) # <- kovariancia matrix, ezt implementalni kell...
+//            cov = np.atleast_2d(cov)
+//    cov += 1e-6 * np.eye(cov.shape[0])
+//    if np.isnan(cov).any() or np.isinf(cov).any():
+//    raise ValueError('Sample covariances not valid! Likely "draws" is too small!')
+//    proposal = MultivariateNormalProposal(cov)
+//#endregion
+//
+//
+//    ' ______________________________________________'
+//    ' |                                            |'
+//    ' | Algoritmus hangolasa                       |'
+//    ' |____________________________________________|'
+//#region tune
+//#  === smc.tune() ============================================================================
+//    if stage > 0:
+//    ave_scaling = np.exp(np.log(scalings.mean()) + (acc_per_chain.mean() - 0.234))
+//    scalings = 0.5 * (ave_scaling + np.exp(np.log(scalings) + (acc_per_chain - 0.234)))
+//
+//    if tune_steps:
+//        acc_rate = max(1.0 / proposed, acc_rate)
+//    n_steps = min(max_steps, max(2, int(np.log(1 - p_acc_rate) / np.log(1 - acc_rate))))
+//    proposed = draws * n_steps
+//#endregion
+//
+//
+//    ' ______________________________________________'
+//    ' |                                            |'
+//    ' | A monte carlo lancok futtatasa             |'
+//    ' |____________________________________________|'
+//    ' A metrop_kernel() fuggveny itt 1db MCMC lancot futtat le'
+//#region mutate
+//#  === smc.mutate() ===========================================================================
+//
+//       parameters = (proposal, scalings, n_steps, beta)
+//
+//    results = [metrop_kernel(x, posterior[draw], tempered_logp[draw], priors[draw], likelihoods[draw], draw, *parameters) for draw in range(draws)]
+//
+//    posterior, acc_list, priors, likelihoods = zip(*results)
+//
+//
+//    posterior = np.array(posterior)
+//    priors = np.array(priors)
+//    likelihoods = np.array(likelihoods)
+//    acc_per_chain = np.array(acc_list)
+//    acc_rate = np.mean(acc_list)
+//# endregion
+//
+//    stage += 1
+//
 
     matplotlibcpp::show();
 
