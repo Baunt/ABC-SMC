@@ -24,6 +24,8 @@ Simplest C++ plotting library --> [matplotlib-cpp](https://github.com/lava/matpl
 - Instead of dividing use the inverse of denominator like 
 ```vector[i] / constant --> vector[i] * constatn2 where constant2 = 1.0 / constatnt1```
 
+![img.png](img.png)
+
 ## TODO
 
 Check this library. Maybe it is faster than Eigen or vanilla C++
