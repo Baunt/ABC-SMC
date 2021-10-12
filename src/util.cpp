@@ -45,3 +45,22 @@ double arithmetic_mean(const std::vector<double> &vector){
 
     return sum / vector.capacity();
 }
+
+template<typename T> int binarySearch(const std::vector<T> &vec, T &item, int s1, int s2) {
+    if (s1 > s2)
+        return -1;
+
+    auto middle = (s1 + s2) / 2;
+
+    if (item == vec.at(middle))
+        return middle;
+
+    if (item > vec.at(middle))
+        return binarySearch(vec, item, middle + 1, s2);
+    else
+        return binarySearch(vec, item, s1, middle - 1);
+}
+
+int searchVector(const std::vector<double> &vec, double &item) {
+    return binarySearch(vec, item, 0, vec.size() - 1);
+}

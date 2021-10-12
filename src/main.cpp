@@ -1,5 +1,6 @@
 #define _USE_MATH_DEFINES
 #include <iomanip>
+#include <random>
 #include "util.h"
 #include "peak_model.h"
 #include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
@@ -216,8 +217,22 @@ int main() {
 //    ' | Mintavetelezes a fontossagi sulyok alapjan |'
 //    ' |____________________________________________|'
 
+        std::vector<double> resamplingIndexes(draws);
+        std::random_device randomDevice;
+        std::mt19937 randomGen(randomDevice());
+        std::normal_distribution<double> distribution(0, 1);
 
+        for (int i = 0; i < resamplingIndexes.capacity(); ++i) {
+            double value = -1;
+            do {
+                value = distribution(randomGen);
+            } while (value < 0.0 || value > 1.0);
 
+            resamplingIndexes[i] = searchVector(weights, value);
+
+        }
+
+        auto t = 0;
 //       resampling_indexes = np.random.choice(np.arange(draws), size=draws, p=weights) # veletlen valasztas, implementalni kell...
 //            posterior = posterior[resampling_indexes]
 //    priors = priors[resampling_indexes]

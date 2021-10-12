@@ -41,4 +41,6 @@ std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>
 
 double arithmetic_mean(const std::vector<double> &vector);
 
+int searchVector(const std::vector<double> &vec, double &item);
+
 #endif //ABC_SMC_ALGORITHM_UTIL_H
