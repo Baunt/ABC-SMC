@@ -222,17 +222,23 @@ int main() {
         std::mt19937 randomGen(randomDevice());
         std::normal_distribution<double> distribution(0, 1);
 
+        std::map<int, double> orderedWeightsWithOriginalIndex;
+        for (int i = 0; i < weights.capacity(); ++i) {
+            orderedWeightsWithOriginalIndex.insert(std::pair<int, double>(i, weights[i]));
+        }
+
+        auto sortedWeights = sortByAscending(orderedWeightsWithOriginalIndex);
+
         for (int i = 0; i < resamplingIndexes.capacity(); ++i) {
             double value = -1;
             do {
                 value = distribution(randomGen);
             } while (value < 0.0 || value > 1.0);
 
-            resamplingIndexes[i] = searchVector(weights, value);
+            resamplingIndexes[i] = searchVector(sortedWeights, value);
 
         }
 
-        auto t = 0;
 //       resampling_indexes = np.random.choice(np.arange(draws), size=draws, p=weights) # veletlen valasztas, implementalni kell...
 //            posterior = posterior[resampling_indexes]
 //    priors = priors[resampling_indexes]

@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <map>
 
 std::vector<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues);
 
@@ -41,6 +42,8 @@ std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>
 
 double arithmetic_mean(const std::vector<double> &vector);
 
-int searchVector(const std::vector<double> &vec, double &item);
+int searchVector(const std::vector<std::pair<int, double>> &vec, double &item);
+
+std::vector<std::pair<int, double>> sortByAscending(std::map<int, double>& M);
 
 #endif //ABC_SMC_ALGORITHM_UTIL_H

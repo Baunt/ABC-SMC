@@ -2,7 +2,9 @@
 // Created by balint.galgoczi on 2021.08.10..
 //
 
+#include <map>
 #include "util.h"
+#include <set>
 
 std::vector<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues){
     // shortened compared to your example:
@@ -46,21 +48,44 @@ double arithmetic_mean(const std::vector<double> &vector){
     return sum / vector.capacity();
 }
 
-template<typename T> int binarySearch(const std::vector<T> &vec, T &item, int s1, int s2) {
+int binarySearch(const std::vector<std::pair<int, double>> &vec, double &item, int s1, int s2) {
     if (s1 > s2)
         return -1;
 
     auto middle = (s1 + s2) / 2;
 
-    if (item == vec.at(middle))
+    if (item == vec.at(middle).second)
         return middle;
 
-    if (item > vec.at(middle))
+    if (item > vec.at(middle).second)
         return binarySearch(vec, item, middle + 1, s2);
     else
         return binarySearch(vec, item, s1, middle - 1);
 }
 
-int searchVector(const std::vector<double> &vec, double &item) {
+int searchVector(const std::vector<std::pair<int, double>> &vec, double &item) {
     return binarySearch(vec, item, 0, vec.size() - 1);
+}
+
+bool sortByVal(const std::pair<int, double> &a,
+               const std::pair<int, double > &b)
+{
+    return (a.second < b.second);
+}
+
+std::vector<std::pair<int, double>> sortByAscending(std::map<int, double>& M)
+{
+    std::vector<std::pair<int, double>> vec;
+
+    // copy key-value pairs from the map to the vector
+    std::map<int, double> :: iterator it2;
+    for (it2=M.begin(); it2!=M.end(); it2++)
+    {
+        vec.push_back(std::make_pair(it2->first, it2->second));
+    }
+
+    // // sort the vector by increasing order of its pair's second value
+    sort(vec.begin(), vec.end(), sortByVal);
+
+    return vec;
 }
