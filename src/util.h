@@ -46,4 +46,8 @@ int searchVector(const std::vector<std::pair<int, double>> &vec, double &item);
 
 std::vector<std::pair<int, double>> sortByAscending(std::map<int, double>& M);
 
+void histogram(std::vector<double> data, int nbins = 20 );
+
+std::vector<int> randomWeightedIndices(int draws, std::vector<double> weights);
+
 #endif //ABC_SMC_ALGORITHM_UTIL_H

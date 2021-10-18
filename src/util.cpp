@@ -1,10 +1,12 @@
 //
 // Created by balint.galgoczi on 2021.08.10..
 //
-
+#include <algorithm>
 #include <map>
 #include "util.h"
 #include <set>
+#include <iomanip>
+#include <random>
 
 std::vector<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues){
     // shortened compared to your example:
@@ -88,4 +90,113 @@ std::vector<std::pair<int, double>> sortByAscending(std::map<int, double>& M)
     sort(vec.begin(), vec.end(), sortByVal);
 
     return vec;
+}
+
+
+std::vector<int> randomWeightedIndices(int draws, std::vector<double> weights)
+{
+    int nweights = weights.capacity();
+    std::vector<int> returnedindices(draws, 0);
+    std::vector<double> cumulativeWeights(nweights, 0.0);
+
+    std::random_device randomDevice;
+    std::mt19937 randomGen(randomDevice());
+    std::uniform_real_distribution<double> uniformdistribution(0.0, 1.0);
+
+    // calculate the cumulative weights
+    double s = weights[0];
+    cumulativeWeights[0] = s;
+    for (int i = 1; i < nweights; ++i) {       
+        s += weights[i];     
+        cumulativeWeights[i] = s;
+    }
+
+    // for each random draw
+    for (int i = 0; i < draws; ++i) {
+        double r = uniformdistribution(randomGen);
+        // this is not optimal, use binary search instead
+        for (int k = 0; k < nweights; ++k) {
+            if (r < cumulativeWeights[k]) {
+                returnedindices[i] = k;
+                break;
+            }
+        }
+    }
+    return returnedindices;
+}
+
+
+
+void histogram(std::vector<double> data, int nbins ){
+    int n = data.capacity();
+    double histmax = 20.0;
+    // auto [dmin, dmax] = std::minmax_element(begin(data), end(data));
+    double dmin = 1.0e20;
+    double dmax = -1.0e20;
+    std::vector<double> bins(nbins, 0.0);
+    std::vector<double> bounds(nbins+1, 0.0);
+    
+    // determine histogram bins
+    for (int i = 0; i < n; ++i)
+    {
+        if (data[i] < dmin)
+        {
+            dmin = data[i];
+        }
+        if (data[i] > dmax)
+        {
+            dmax = data[i];
+        }
+    }
+    double binsize = (dmax-dmin) / (float)nbins;
+    for (int i = 0; i < (nbins + 1); ++i)
+    {   
+        bounds[i] = dmin + i*binsize;
+    }    
+
+
+    // histogram: this is inefficient but whatever:
+    for (int i = 0; i < n; ++i)
+    {
+        for (int j = 0; j < nbins; ++j)
+        {
+            if (bounds[j] < data[i] && data[i] < bounds[j+1])
+                bins[j] += 1.0;
+        }
+    }
+
+    // normalize
+    double maxcount = 0.0;
+    for (int i = 0; i < nbins; ++i)
+    {
+        if (bins[i] > maxcount)
+            maxcount = bins[i];
+    }
+    std::cout << maxcount << "\n";
+    for (int i = 0; i < nbins; ++i)
+    {
+        bins[i] = bins[i] * (histmax/maxcount);
+    }
+
+
+    // plotting    
+    for (int i = 0; i < 20 + (int)round(histmax); ++i)
+    {
+        std::cout << "_";
+    }
+    std::cout << "\n";
+    for (int i = 0; i < nbins; ++i)
+    {
+        int counts = (int)round(bins[i]);
+        std::cout << std::setw(12) << 0.5*(bounds[i]+bounds[i+1]) << " |";
+        for (int j = 0; j < counts; ++j)
+        {
+            std::cout << "X";
+        }
+        std::cout << "\n";
+    }
+
+    std::cout << "samples: " << n << ", bins: " << nbins << '\n';
+    std::cout << "min = " << dmin << ", max = " << dmax << ", bin size: " << binsize << '\n';
+    return;
 }

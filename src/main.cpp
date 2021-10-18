@@ -5,6 +5,8 @@
 #include "peak_model.h"
 #include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
 #include "probability_distribution.h"
+#include <algorithm>
+#include <math.h> 
 
 int main() {
 
@@ -103,16 +105,28 @@ int main() {
 
     std::vector<std::vector<double>> transposedPosterior = transpose(posteriors);
 
+    // for (int i = 0; i < normalDistribution.capacity(); ++i) {
+    //     for (int j = 0; j < normalDistribution[i].Sample(draws).capacity(); ++j) {
+    //         transposedPosterior[i][j] = normalDistribution[i].Sample(draws)[j];
+    //     }
+    // }
+    
+
+    
     for (int i = 0; i < normalDistribution.capacity(); ++i) {
-        for (int j = 0; j < normalDistribution[i].Sample(draws).capacity(); ++j) {
-            transposedPosterior[i][j] = normalDistribution[i].Sample(draws)[j];
+        auto tmp = normalDistribution[i].Sample(draws);
+        for (int j = 0; j < draws; ++j) {
+            transposedPosterior[i][j] = tmp[j];
         }
+        std::cout << i << "\n";
+        histogram(tmp, 20);
     }
+
 
     std::vector<std::vector<double>> init_population = transpose(transposedPosterior);
     std::vector<double> likelihoods(draws, 0);
 
-    matplotlibcpp::plot(real_y);
+    //matplotlibcpp::plot(real_y);
 //    'A kezdeti populacionak kiszamoljuk a logp es likelihood_logp ertekeit.'
     for (int i = 0; i < draws; ++i) {
         for (int j = 0; j < posteriors[i].capacity(); ++j) {
@@ -127,7 +141,7 @@ int main() {
             y_sim[i] = gauss[i] + lorentz[i];
         }
 
-        matplotlibcpp::plot(y_sim);
+        //matplotlibcpp::plot(y_sim);
 
         std::vector<double> spectrumDiffs(256);
         for (int j = 0; j < real_y.capacity(); ++j) {
@@ -154,7 +168,7 @@ int main() {
         double rN = likelihoods.capacity() * threshold;
 
         std::vector<double> ll_diffs(likelihoods.capacity());
-        double max = *max_element(likelihoods.begin(), likelihoods.end());
+        double max = *std::max_element(likelihoods.begin(), likelihoods.end());
         for (int i = 0; i < likelihoods.capacity(); ++i) {
             ll_diffs[i] = likelihoods[i] - max;
         }
@@ -217,11 +231,68 @@ int main() {
 //    ' | Mintavetelezes a fontossagi sulyok alapjan |'
 //    ' |____________________________________________|'
 
+        
+        // auto resamplingIndexes = randomWeightedIndices(draws, weights);
+
+        // testing resampling
+        {
+
+            /* drawing 10000 numbers from a set of 100 weighted indices */
+            int nweights = 100;
+            int ndraws = 10000;
+
+            // creating random weights
+            std::random_device randomDevice;
+            std::mt19937 randomGen(randomDevice());            
+            std::normal_distribution<double> distribution(0.0, 1.0);
+            std::vector<double> randomWeights(nweights, 0.0);
+            double norm = 0.0;
+            for (int i = 0; i < nweights; ++i)
+            {
+                double r = abs(distribution(randomGen)); // half normal distribution (most probabilities are small, there are a few larger ones)
+                randomWeights[i] = r; 
+                norm += r;
+            }
+        
+            // normalizing weights
+            norm = 1.0 / norm;
+            for (int i = 0; i < nweights; ++i)
+            {                
+                randomWeights[i] *= norm;             
+            }
+
+
+            // drawing random indexes (~ randomchoice of numpy)
+            auto resamplingIndexes = randomWeightedIndices(ndraws, randomWeights);
+            
+
+            // finally, check the results
+            std::vector<int> numberoftimes(nweights, 0); // this will store how many times each index was drawn
+
+            for (int i = 0; i < ndraws; ++i)
+            {
+                numberoftimes[resamplingIndexes[i]] += 1;
+            }
+            std::cout << "Testing the resampling algorithm:\n Index    Probability    Number of draws\n";
+
+
+            for (int i = 0; i < nweights; ++i)
+            {
+                std::cout << std::setw(4) << i << std::fixed << std::setw(16) << std::setprecision(8) << randomWeights[i] << std::setw(14) << numberoftimes[i] << "\n";
+            }
+        }
+
+
+        /*
+
         std::vector<double> resamplingIndexes(draws);
         std::random_device randomDevice;
         std::mt19937 randomGen(randomDevice());
-        std::normal_distribution<double> distribution(0, 1);
+        std::uniform_real_distribution<double> udist(0.0, 1.0);
+         std::normal_distribution<double> distribution(0, 1);
 
+        
+        
         std::map<int, double> orderedWeightsWithOriginalIndex;
         for (int i = 0; i < weights.capacity(); ++i) {
             orderedWeightsWithOriginalIndex.insert(std::pair<int, double>(i, weights[i]));
@@ -238,6 +309,7 @@ int main() {
             resamplingIndexes[i] = searchVector(sortedWeights, value);
 
         }
+        */
 
 //       resampling_indexes = np.random.choice(np.arange(draws), size=draws, p=weights) # veletlen valasztas, implementalni kell...
 //            posterior = posterior[resampling_indexes]
@@ -305,7 +377,7 @@ int main() {
 //    stage += 1
 //
 
-    matplotlibcpp::show();
+    // matplotlibcpp::show();
 
     return 0;
 }
