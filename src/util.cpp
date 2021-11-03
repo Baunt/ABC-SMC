@@ -200,3 +200,19 @@ void histogram(std::vector<double> data, int nbins ){
     std::cout << "min = " << dmin << ", max = " << dmax << ", bin size: " << binsize << '\n';
     return;
 }
+
+std::vector<double> resampling(std::vector<double> vector, std::vector<int> indices){
+    std::vector<double> resampledResult(vector.capacity());
+    for (int i = 0; i < vector.capacity(); ++i) {
+        resampledResult[i]= vector[indices[i]];
+    }
+    return resampledResult;
+}
+
+std::vector<std::vector<double>> resampling(std::vector<std::vector<double>> vector, std::vector<int> indices){
+    std::vector<std::vector<double>> resampledResult(vector.capacity());
+    for (int i = 0; i < vector.capacity(); ++i) {
+        resampledResult[i]= vector[indices[i]];
+    }
+    return resampledResult;
+}

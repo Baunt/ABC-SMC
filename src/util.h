@@ -50,4 +50,34 @@ void histogram(std::vector<double> data, int nbins = 20 );
 
 std::vector<int> randomWeightedIndices(int draws, std::vector<double> weights);
 
+std::vector<double> resampling(std::vector<double> vector, std::vector<int> indices);
+
+std::vector<std::vector<double>> resampling(std::vector<std::vector<double>> vector, std::vector<int> indices);
+//template<class T> void reorder(std::vector<T> &v, std::vector<size_t> const &order ){
+//    for ( int s = 1, d; s < order.capacity(); ++ s ) {
+//        for ( d = order[s]; d < s; d = order[d] ) ;
+//        if ( d == s ) while ( d = order[d], d != s ) swap( v[s], v[d] );
+//    }
+//}
+
+//template< typename order_iterator, typename value_iterator >
+//void reorder( order_iterator order_begin, order_iterator order_end, value_iterator v )  {
+//    typedef typename std::iterator_traits<value_iterator>::value_type value_t;
+//    typedef typename std::iterator_traits<order_iterator>::value_type index_t;
+//    typedef typename std::iterator_traits<order_iterator>::difference_type diff_t;
+//
+//    diff_t remaining = order_end - 1 - order_begin;
+//    for ( index_t s = index_t(), d; remaining > 0; ++ s ) {
+//        for ( d = order_begin[s]; d > s; d = order_begin[d] ) ;
+//        if ( d == s ) {
+//            -- remaining;
+//            value_t temp = v[s];
+//            while ( d = order_begin[d], d != s ) {
+//                swap( temp, v[d] );
+//                -- remaining;
+//            }
+//            v[s] = temp;
+//        }
+//    }
+//}
 #endif //ABC_SMC_ALGORITHM_UTIL_H

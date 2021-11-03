@@ -4,7 +4,9 @@
 #include "util.h"
 #include "peak_model.h"
 #include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
+#include "../include/third-party-library/Eigen/Core"
 #include "probability_distribution.h"
+#include "../include/third-party-library/Eigen/src/Cholesky/LLT.h"
 #include <algorithm>
 #include <math.h> 
 
@@ -124,6 +126,7 @@ int main() {
 
 
     std::vector<std::vector<double>> init_population = transpose(transposedPosterior);
+    posteriors = init_population;
     std::vector<double> likelihoods(draws, 0);
 
     //matplotlibcpp::plot(real_y);
@@ -235,131 +238,144 @@ int main() {
         // auto resamplingIndexes = randomWeightedIndices(draws, weights);
 
         // testing resampling
-        {
-
-            /* drawing 10000 numbers from a set of 100 weighted indices */
-            int nweights = 100;
-            int ndraws = 10000;
-
-            // creating random weights
-            std::random_device randomDevice;
-            std::mt19937 randomGen(randomDevice());            
-            std::normal_distribution<double> distribution(0.0, 1.0);
-            std::vector<double> randomWeights(nweights, 0.0);
-            double norm = 0.0;
-            for (int i = 0; i < nweights; ++i)
-            {
-                double r = abs(distribution(randomGen)); // half normal distribution (most probabilities are small, there are a few larger ones)
-                randomWeights[i] = r; 
-                norm += r;
-            }
-        
-            // normalizing weights
-            norm = 1.0 / norm;
-            for (int i = 0; i < nweights; ++i)
-            {                
-                randomWeights[i] *= norm;             
-            }
 
 
-            // drawing random indexes (~ randomchoice of numpy)
-            auto resamplingIndexes = randomWeightedIndices(ndraws, randomWeights);
-            
+        /* drawing 10000 numbers from a set of 100 weighted indices */
+        int nweights = 100;
+        int ndraws = 10000;
 
-            // finally, check the results
-            std::vector<int> numberoftimes(nweights, 0); // this will store how many times each index was drawn
-
-            for (int i = 0; i < ndraws; ++i)
-            {
-                numberoftimes[resamplingIndexes[i]] += 1;
-            }
-            std::cout << "Testing the resampling algorithm:\n Index    Probability    Number of draws\n";
-
-
-            for (int i = 0; i < nweights; ++i)
-            {
-                std::cout << std::setw(4) << i << std::fixed << std::setw(16) << std::setprecision(8) << randomWeights[i] << std::setw(14) << numberoftimes[i] << "\n";
-            }
-        }
-
-
-        /*
-
-        std::vector<double> resamplingIndexes(draws);
+        // creating random weights
         std::random_device randomDevice;
         std::mt19937 randomGen(randomDevice());
-        std::uniform_real_distribution<double> udist(0.0, 1.0);
-         std::normal_distribution<double> distribution(0, 1);
-
+        std::normal_distribution<double> distribution(0.0, 1.0);
+        std::vector<double> randomWeights(nweights, 0.0);
+        double norm = 0.0;
+        for (int i = 0; i < nweights; ++i)
+        {
+            double r = abs(distribution(randomGen)); // half normal distribution (most probabilities are small, there are a few larger ones)
+            randomWeights[i] = r;
+            norm += r;
+        }
         
-        
-        std::map<int, double> orderedWeightsWithOriginalIndex;
-        for (int i = 0; i < weights.capacity(); ++i) {
-            orderedWeightsWithOriginalIndex.insert(std::pair<int, double>(i, weights[i]));
+        // normalizing weights
+        norm = 1.0 / norm;
+        for (int i = 0; i < nweights; ++i)
+        {
+            randomWeights[i] *= norm;
         }
 
-        auto sortedWeights = sortByAscending(orderedWeightsWithOriginalIndex);
 
-        for (int i = 0; i < resamplingIndexes.capacity(); ++i) {
-            double value = -1;
-            do {
-                value = distribution(randomGen);
-            } while (value < 0.0 || value > 1.0);
+        // drawing random indexes (~ randomchoice of numpy)
+        auto resamplingIndexes = randomWeightedIndices(ndraws, randomWeights);
 
-            resamplingIndexes[i] = searchVector(sortedWeights, value);
 
+        // finally, check the results
+        std::vector<int> numberoftimes(nweights, 0); // this will store how many times each index was drawn
+
+        for (int i = 0; i < ndraws; ++i)
+        {
+            numberoftimes[resamplingIndexes[i]] += 1;
         }
-        */
-
-//       resampling_indexes = np.random.choice(np.arange(draws), size=draws, p=weights) # veletlen valasztas, implementalni kell...
-//            posterior = posterior[resampling_indexes]
-//    priors = priors[resampling_indexes]
-//    likelihoods = likelihoods[resampling_indexes]
-//    tempered_logp = priors + likelihoods * beta
-//    acc_per_chain = acc_per_chain[resampling_indexes]
-//    scalings = scalings[resampling_indexes]
+        std::cout << "Testing the resampling algorithm:\n Index    Probability    Number of draws\n";
 
 
-    }
+        for (int i = 0; i < nweights; ++i)
+        {
+            std::cout << std::setw(4) << i << std::fixed << std::setw(16) << std::setprecision(8) << randomWeights[i] << std::setw(14) << numberoftimes[i] << "\n";
+        }
+
+        posteriors = resampling(posteriors, resamplingIndexes);
+        priors = resampling(priors, resamplingIndexes);
+        likelihoods = resampling(likelihoods, resamplingIndexes);
+        scalings = resampling(scalings, resamplingIndexes);
+        acc_per_chain = resampling(acc_per_chain, resamplingIndexes);
+
+        std::vector<double>tempered_logp(draws);
+        for (int i = 0; i < draws; ++i) {
+            tempered_logp[i] = priors[i] + likelihoods[i] * beta;
+        }
 
 
+        Eigen::MatrixXd post(draws, nparams);
+        for (int i = 0; i < draws; ++i) {
+            for (int j = 0; j < nparams; ++j) {
+                post(i, j) = posteriors[i][j];
+            }
+        }
 
-//#region update_proposal
-//#  === smc.update_proposal() ==================================================================
-//       cov = np.cov(posterior, bias=False, rowvar=0) # <- kovariancia matrix, ezt implementalni kell...
-//            cov = np.atleast_2d(cov)
-//    cov += 1e-6 * np.eye(cov.shape[0])
-//    if np.isnan(cov).any() or np.isinf(cov).any():
-//    raise ValueError('Sample covariances not valid! Likely "draws" is too small!')
-//    proposal = MultivariateNormalProposal(cov)
-//#endregion
-//
-//
+        Eigen::MatrixXd centered = post.rowwise() - post.colwise().mean();
+        Eigen::MatrixXd cov = (centered.adjoint() * centered) / double(post.rows() - 1);
+        Eigen::LLT<Eigen::MatrixXd> llt(cov);
+
+//        Eigen::MatrixXd L = lltOfCovMatrix.matrixL();
+//        std::cout << "The Cholesky factor L is" << std::endl << L << std::endl;
+//        std::cout << "To check this, let us compute L * L.transpose()" << std::endl;
+//        std::cout << L * L.transpose() << std::endl;
+//        std::cout << "This should equal the matrix A" << std::endl << cov << std::endl;
+
 //    ' ______________________________________________'
 //    ' |                                            |'
 //    ' | Algoritmus hangolasa                       |'
 //    ' |____________________________________________|'
-//#region tune
-//#  === smc.tune() ============================================================================
-//    if stage > 0:
-//    ave_scaling = np.exp(np.log(scalings.mean()) + (acc_per_chain.mean() - 0.234))
-//    scalings = 0.5 * (ave_scaling + np.exp(np.log(scalings) + (acc_per_chain - 0.234)))
-//
-//    if tune_steps:
-//        acc_rate = max(1.0 / proposed, acc_rate)
-//    n_steps = min(max_steps, max(2, int(np.log(1 - p_acc_rate) / np.log(1 - acc_rate))))
-//    proposed = draws * n_steps
-//#endregion
-//
-//
+
+        if (stage > 0){
+            auto ave_scalings = exp(log(arithmetic_mean(scalings) + arithmetic_mean(acc_per_chain) - 0.234));
+
+            for (int i = 0; i < scalings.capacity(); ++i) {
+                scalings[i] = 0.5 * (ave_scalings + exp(log(scalings[i])) + (acc_per_chain[i] - 0.234));
+            }
+
+            if (tune_steps){
+                acc_rate = std::max(1.0 / proposed, acc_rate);
+                int t = (int) (log(1-p_acc_rate) / log(1- acc_rate));
+                n_steps = std::min(max_steps, std::max(2, t));
+            }
+            proposed = draws * n_steps;
+        }
+
 //    ' ______________________________________________'
 //    ' |                                            |'
 //    ' | A monte carlo lancok futtatasa             |'
 //    ' |____________________________________________|'
-//    ' A metrop_kernel() fuggveny itt 1db MCMC lancot futtat le'
-//#region mutate
-//#  === smc.mutate() ===========================================================================
+
+        for (int draw = 0; draw < draws; ++draw) {
+            std::vector<double> deltas(n_steps) ; //deltas = np.squeeze(proposal(n_steps) * scalings[draw])
+            int accepted = 0;
+
+            for (int i = 0; i < n_steps; ++i) {
+                auto delta = deltas[n_steps];
+            }
+//            for n_step in range(n_steps):
+//            delta = deltas[n_step]
+//            q_new = q_old + delta
 //
+//            _params = q_new
+//
+//            pl = 0.0
+//            for j, _dist in enumerate(distributions):
+//            pl += _dist.logp(_params[j])
+//
+//            y_sim = peakmodel(x, *_params)
+//            mean_abserror = np.mean(np.abs(y_sim-real_y)) # np.mean -> atlag
+//            ll = (-(mean_abserror ** 2) / epsilon ** 2 + np.log(1 / (2 * np.pi * epsilon ** 2))) / 2.0
+//
+//
+//            new_tempered_logp = pl + ll * beta
+//
+//            q_old, accept = metrop_select(new_tempered_logp - old_tempered_logp, q_new, q_old)
+//
+//            if accept:
+//                accepted += 1
+//            old_prior = pl
+//            old_likelihood = ll
+//            old_tempered_logp = new_tempered_logp
+//
+//            return q_old, accepted / n_steps, old_prior, old_likelihood
+
+
+        }
+
+
 //       parameters = (proposal, scalings, n_steps, beta)
 //
 //    results = [metrop_kernel(x, posterior[draw], tempered_logp[draw], priors[draw], likelihoods[draw], draw, *parameters) for draw in range(draws)]
@@ -373,9 +389,10 @@ int main() {
 //    acc_per_chain = np.array(acc_list)
 //    acc_rate = np.mean(acc_list)
 //# endregion
-//
-//    stage += 1
-//
+        stage += 1;
+    }
+
+
 
     // matplotlibcpp::show();
 
