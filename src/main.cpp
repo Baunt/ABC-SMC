@@ -356,7 +356,7 @@ int main() {
             int accepted = 0;
 
             for (int i = 0; i < n_steps; ++i) {
-                Eigen::VectorXd delta = deltas.row(n_steps - 1);
+                Eigen::VectorXd delta = deltas.row(i);
                 std::cout << delta << std::endl;
                 Eigen::VectorXd q_old(posteriors[draw].capacity());
                 for (int j = 0; j < posteriors[draw].capacity(); ++j) {
@@ -410,16 +410,6 @@ int main() {
             }
         }
         new_acc_rate = new_acc_per_chain.mean();
-
-//    results = [metrop_kernel(x, posterior[draw], tempered_logp[draw], priors[draw], likelihoods[draw], draw, *parameters) for draw in range(draws)]
-//
-//    posterior, acc_list, priors, likelihoods = zip(*results)
-//    posterior = np.array(posterior)
-//    priors = np.array(priors)
-//    likelihoods = np.array(likelihoods)
-//    acc_per_chain = np.array(acc_list)
-//    acc_rate = np.mean(acc_list)
-
         stage += 1;
     }
 
