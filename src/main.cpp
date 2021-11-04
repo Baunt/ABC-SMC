@@ -398,10 +398,18 @@ int main() {
                     old_prior = pl;
                     old_likelihood = ll;
                     old_tempered_logp = new_tempered_logp;
+                    new_posteriors.row(draw) = q_old;
+
+                } else{
+                    new_posteriors.row(draw) = q_new;
                 }
-                
+
+                new_priors(draw) = old_prior;
+                new_likelihoods(draw) = old_likelihood;
+                new_acc_per_chain(draw) = accepted / n_steps;
             }
         }
+        new_acc_rate = new_acc_per_chain.mean();
 
 //    results = [metrop_kernel(x, posterior[draw], tempered_logp[draw], priors[draw], likelihoods[draw], draw, *parameters) for draw in range(draws)]
 //
