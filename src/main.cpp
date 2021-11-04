@@ -22,6 +22,7 @@ int main() {
     double real_intensity1 = 0.5;
 
     std::vector<double> real_y(256);
+    Eigen::VectorXd real_y_eigen(256);
     std::vector<double> y_sim(256);
 
     //simulated spectrum
@@ -38,10 +39,12 @@ int main() {
 
     for (int i = 0; i < gaussianModel.capacity(); ++i) {
         real_y[i] = gaussianModel[i] + lorentzianModel[i];
+        real_y_eigen(i) = gaussianModel[i] + lorentzianModel[i];
     }
 
     for (int i = 0; i < real_y.capacity(); ++i) {
         real_y[i] += noise[i];
+        real_y_eigen(i) += noise[i];
     }
 
     //Initial tips
@@ -338,57 +341,77 @@ int main() {
 //    ' | A monte carlo lancok futtatasa             |'
 //    ' |____________________________________________|'
 
+        Eigen::MatrixXd new_posteriors(post);
+        Eigen::VectorXd new_priors(priors.capacity());
+        Eigen::VectorXd new_likelihoods(likelihoods.capacity());
+        Eigen::VectorXd new_acc_per_chain(acc_per_chain.capacity());
+        double new_acc_rate = 0.0;
+
         for (int draw = 0; draw < draws; ++draw) {
-            std::vector<double> deltas(n_steps) ; //deltas = np.squeeze(proposal(n_steps) * scalings[draw])
+
+            Eigen::MatrixXd randomsForDeltas = Eigen::MatrixXd::Random(n_steps, 6);
+            Eigen::MatrixXd deltas = randomsForDeltas * llt.matrixLLT();
+            deltas *= scalings[draw];
+
             int accepted = 0;
 
             for (int i = 0; i < n_steps; ++i) {
-                auto delta = deltas[n_steps];
+                Eigen::VectorXd delta = deltas.row(n_steps - 1);
+                std::cout << delta << std::endl;
+                Eigen::VectorXd q_old(posteriors[draw].capacity());
+                for (int j = 0; j < posteriors[draw].capacity(); ++j) {
+                    q_old(j) = posteriors[draw][j];
+                }
+
+                Eigen::VectorXd q_new = q_old + delta;
+                std::cout << q_new << std::endl;
+
+                double pl = 0.0;
+                for (int dist = 0; dist < normalDistribution.capacity(); ++dist) {
+                    pl += normalDistribution[dist].LogP(q_new[dist]);
+                }
+
+                PeakModel gaussModel = PeakModel(x, q_new[0], q_new[1], q_new[2], npix);
+                std::vector<double> gauss = gaussModel.Gaussian();
+                PeakModel lorentzModel = PeakModel(x, q_new[3], q_new[4], q_new[5], npix);
+                std::vector<double> lorentz = lorentzModel.Lorenzt();
+                for (int peak = 0; peak < gauss.capacity(); ++peak) {
+                    y_sim[i] = gauss[peak] + lorentz[peak];
+                }
+                std::vector<double> spectrumDiffs(256);
+                for (int j = 0; j < real_y.capacity(); ++j) {
+                    spectrumDiffs[j] = abs(real_y[j] - y_sim[j]);
+                }
+
+                double mean_abs_error = arithmetic_mean(spectrumDiffs);
+                double ll = (-(mean_abs_error * mean_abs_error) / epsilon * epsilon + log(1 / (2 * M_PI * epsilon * epsilon))) / 2.0;
+                double new_tempered_logp = pl + ll * beta;
+                double sub_new_old_tempered_logp = new_tempered_logp - tempered_logp[draw];
+
+                double old_prior = 0.0;
+                double old_likelihood = 0.0;
+                double old_tempered_logp = 0.0;
+
+                if (getUniformRandomNumber() < sub_new_old_tempered_logp){
+                    q_old = q_new;
+                    accepted += 1;
+                    old_prior = pl;
+                    old_likelihood = ll;
+                    old_tempered_logp = new_tempered_logp;
+                }
+                
             }
-//            for n_step in range(n_steps):
-//            delta = deltas[n_step]
-//            q_new = q_old + delta
-//
-//            _params = q_new
-//
-//            pl = 0.0
-//            for j, _dist in enumerate(distributions):
-//            pl += _dist.logp(_params[j])
-//
-//            y_sim = peakmodel(x, *_params)
-//            mean_abserror = np.mean(np.abs(y_sim-real_y)) # np.mean -> atlag
-//            ll = (-(mean_abserror ** 2) / epsilon ** 2 + np.log(1 / (2 * np.pi * epsilon ** 2))) / 2.0
-//
-//
-//            new_tempered_logp = pl + ll * beta
-//
-//            q_old, accept = metrop_select(new_tempered_logp - old_tempered_logp, q_new, q_old)
-//
-//            if accept:
-//                accepted += 1
-//            old_prior = pl
-//            old_likelihood = ll
-//            old_tempered_logp = new_tempered_logp
-//
-//            return q_old, accepted / n_steps, old_prior, old_likelihood
-
-
         }
 
-
-//       parameters = (proposal, scalings, n_steps, beta)
-//
 //    results = [metrop_kernel(x, posterior[draw], tempered_logp[draw], priors[draw], likelihoods[draw], draw, *parameters) for draw in range(draws)]
 //
 //    posterior, acc_list, priors, likelihoods = zip(*results)
-//
-//
 //    posterior = np.array(posterior)
 //    priors = np.array(priors)
 //    likelihoods = np.array(likelihoods)
 //    acc_per_chain = np.array(acc_list)
 //    acc_rate = np.mean(acc_list)
-//# endregion
+
         stage += 1;
     }
 

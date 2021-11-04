@@ -53,6 +53,9 @@ std::vector<int> randomWeightedIndices(int draws, std::vector<double> weights);
 std::vector<double> resampling(std::vector<double> vector, std::vector<int> indices);
 
 std::vector<std::vector<double>> resampling(std::vector<std::vector<double>> vector, std::vector<int> indices);
+
+double getUniformRandomNumber();
+
 //template<class T> void reorder(std::vector<T> &v, std::vector<size_t> const &order ){
 //    for ( int s = 1, d; s < order.capacity(); ++ s ) {
 //        for ( d = order[s]; d < s; d = order[d] ) ;

@@ -125,7 +125,12 @@ std::vector<int> randomWeightedIndices(int draws, std::vector<double> weights)
     return returnedindices;
 }
 
-
+double getUniformRandomNumber(){
+    std::random_device randomDevice;
+    std::mt19937 randomGen(randomDevice());
+    std::uniform_real_distribution<double> uniformdistribution(0.0, 1.0);
+    return uniformdistribution(randomGen);
+}
 
 void histogram(std::vector<double> data, int nbins ){
     int n = data.capacity();
