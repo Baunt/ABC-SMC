@@ -3,7 +3,7 @@
 #include <random>
 #include "util.h"
 #include "peak_model.h"
-#include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
+// #include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
 #include "../include/third-party-library/Eigen/Core"
 #include "probability_distribution.h"
 #include "../include/third-party-library/Eigen/src/Cholesky/LLT.h"
@@ -123,8 +123,8 @@ int main() {
         for (int j = 0; j < draws; ++j) {
             transposedPosterior[i][j] = tmp[j];
         }
-        std::cout << i << "\n";
-        histogram(tmp, 20);
+        // std::cout << i << "\n";
+        // histogram(tmp, 20);
     }
 
 
@@ -160,6 +160,7 @@ int main() {
     }
 
     //    'Itt kezdodik az iteracio'
+
     while (beta < 1){
         std::cout << std::setprecision(5) << "Stage: " << stage << std::endl;
         std::cout << std::setprecision(5) << "Beta: " << beta << std::endl;
@@ -171,7 +172,7 @@ int main() {
         double upBeta = 2.0;
         double newBeta;
 
-        double rN = likelihoods.capacity() * threshold;
+        int rN = int(round(likelihoods.capacity() * threshold));
 
         std::vector<double> ll_diffs(likelihoods.capacity());
         double max = *std::max_element(likelihoods.begin(), likelihoods.end());
@@ -183,7 +184,8 @@ int main() {
 //    ' |                                         |'
 //    ' | Fontossagi sulyok es beta meghatarozasa |'
 //    ' |_________________________________________|'
-
+        #pragma region importance_weights
+        std::cout << "    Stage " << stage << " - Importance weights\n";
         std::vector<double> weights_un(ll_diffs.capacity());
         std::vector<double> weights(ll_diffs.capacity());
 
@@ -202,7 +204,7 @@ int main() {
                 sum_of_weights += weights[i] * weights[i];
             }
 
-            double ESS = 1 / sum_of_weights;
+            int ESS = int(round(1 / sum_of_weights));
             if (ESS == rN){
                 break;
             }
@@ -231,62 +233,63 @@ int main() {
         //marginal_likelihood????
 
         beta = newBeta;
-
+        std::cout << std::setprecision(5) << "  new beta:" << beta << "\n";        
+        #pragma endregion importance_weights
 //    ' ______________________________________________'
 //    ' |                                            |'
 //    ' | Mintavetelezes a fontossagi sulyok alapjan |'
-//    ' |____________________________________________|'
+//    ' |____________________________________________|'        
 
-        
-        // auto resamplingIndexes = randomWeightedIndices(draws, weights);
-
-        // testing resampling
-
-
-        /* drawing 10000 numbers from a set of 100 weighted indices */
-        int nweights = 100;
-        int ndraws = 10000;
-
-        // creating random weights
-        std::random_device randomDevice;
-        std::mt19937 randomGen(randomDevice());
-        std::normal_distribution<double> distribution(0.0, 1.0);
-        std::vector<double> randomWeights(nweights, 0.0);
-        double norm = 0.0;
-        for (int i = 0; i < nweights; ++i)
+        #pragma region resampling_example
+        if (false)
         {
-            double r = abs(distribution(randomGen)); // half normal distribution (most probabilities are small, there are a few larger ones)
-            randomWeights[i] = r;
-            norm += r;
+            // testing resampling ------------------------------------------------------------------------------
+            // drawing 10000 numbers from a set of 100 weighted indices 
+            int nweights = 100;
+            int ndraws = 10000;
+
+            // creating random weights
+            std::random_device randomDevice;
+            std::mt19937 randomGen(randomDevice());
+            std::normal_distribution<double> distribution(0.0, 1.0);
+            std::vector<double> randomWeights(nweights, 0.0);
+            double norm = 0.0;
+            for (int i = 0; i < nweights; ++i)
+            {
+                double r = abs(distribution(randomGen)); // half normal distribution (most probabilities are small, there are a few larger ones)
+                randomWeights[i] = r;
+                norm += r;
+            }
+            
+            // normalizing weights
+            norm = 1.0 / norm;
+            for (int i = 0; i < nweights; ++i)
+            {
+                randomWeights[i] *= norm;
+            }
+
+            // drawing random indexes (~ randomchoice of numpy)
+            auto resamplingIndexes = randomWeightedIndices(ndraws, randomWeights);
+
+            // finally, check the results
+            std::vector<int> numberoftimes(nweights, 0); // this will store how many times each index was drawn
+
+            for (int i = 0; i < ndraws; ++i)
+            {
+                numberoftimes[resamplingIndexes[i]] += 1;
+            }
+            std::cout << "Testing the resampling algorithm:\n Index    Probability    Number of draws\n";
+
+            for (int i = 0; i < nweights; ++i)
+            {
+                std::cout << std::setw(4) << i << std::fixed << std::setw(16) << std::setprecision(8) << randomWeights[i] << std::setw(14) << numberoftimes[i] << "\n";
+            }
         }
-        
-        // normalizing weights
-        norm = 1.0 / norm;
-        for (int i = 0; i < nweights; ++i)
-        {
-            randomWeights[i] *= norm;
-        }
+        #pragma endregion resampling_example
 
-
-        // drawing random indexes (~ randomchoice of numpy)
-        auto resamplingIndexes = randomWeightedIndices(ndraws, randomWeights);
-
-
-        // finally, check the results
-        std::vector<int> numberoftimes(nweights, 0); // this will store how many times each index was drawn
-
-        for (int i = 0; i < ndraws; ++i)
-        {
-            numberoftimes[resamplingIndexes[i]] += 1;
-        }
-        std::cout << "Testing the resampling algorithm:\n Index    Probability    Number of draws\n";
-
-
-        for (int i = 0; i < nweights; ++i)
-        {
-            std::cout << std::setw(4) << i << std::fixed << std::setw(16) << std::setprecision(8) << randomWeights[i] << std::setw(14) << numberoftimes[i] << "\n";
-        }
-
+        #pragma region resampling
+        std::cout << "    Stage " << stage << " - Resampling\n";
+        auto resamplingIndexes = randomWeightedIndices(draws, weights);
         posteriors = resampling(posteriors, resamplingIndexes);
         priors = resampling(priors, resamplingIndexes);
         likelihoods = resampling(likelihoods, resamplingIndexes);
@@ -316,16 +319,18 @@ int main() {
 //        std::cout << L * L.transpose() << std::endl;
 //        std::cout << "This should equal the matrix A" << std::endl << cov << std::endl;
 
+        #pragma endregion resampling             
 //    ' ______________________________________________'
 //    ' |                                            |'
 //    ' | Algoritmus hangolasa                       |'
 //    ' |____________________________________________|'
-
+        #pragma region tuning
+        std::cout << "    Stage " << stage << " - Tuning\n";   
         if (stage > 0){
-            auto ave_scalings = exp(log(arithmetic_mean(scalings) + arithmetic_mean(acc_per_chain) - 0.234));
+            auto ave_scalings = exp(log(arithmetic_mean(scalings)) + (arithmetic_mean(acc_per_chain) - 0.234));
 
             for (int i = 0; i < scalings.capacity(); ++i) {
-                scalings[i] = 0.5 * (ave_scalings + exp(log(scalings[i])) + (acc_per_chain[i] - 0.234));
+                scalings[i] = 0.5 * (ave_scalings + exp(log(scalings[i]) + (acc_per_chain[i] - 0.234)));
             }
 
             if (tune_steps){
@@ -335,12 +340,15 @@ int main() {
             }
             proposed = draws * n_steps;
         }
+        #pragma endregion tuning
 
+        
 //    ' ______________________________________________'
 //    ' |                                            |'
 //    ' | A monte carlo lancok futtatasa             |'
 //    ' |____________________________________________|'
-
+        #pragma region MCMC
+        std::cout << "    Stage " << stage << " - MCMC chains\n";
         Eigen::MatrixXd new_posteriors(post);
         Eigen::VectorXd new_priors(priors.capacity());
         Eigen::VectorXd new_likelihoods(likelihoods.capacity());
@@ -357,14 +365,14 @@ int main() {
 
             for (int i = 0; i < n_steps; ++i) {
                 Eigen::VectorXd delta = deltas.row(i);
-                std::cout << delta << std::endl;
+                // std::cout << delta << std::endl;
                 Eigen::VectorXd q_old(posteriors[draw].capacity());
                 for (int j = 0; j < posteriors[draw].capacity(); ++j) {
                     q_old(j) = posteriors[draw][j];
                 }
 
                 Eigen::VectorXd q_new = q_old + delta;
-                std::cout << q_new << std::endl;
+                // std::cout << q_new << std::endl;
 
                 double pl = 0.0;
                 for (int dist = 0; dist < normalDistribution.capacity(); ++dist) {
@@ -409,7 +417,10 @@ int main() {
                 new_acc_per_chain(draw) = accepted / n_steps;
             }
         }
+        std::cout << std::setprecision(5) << "    Stage " << stage << " - MCMC chains done. \n";
         new_acc_rate = new_acc_per_chain.mean();
+        #pragma endregion MCMC
+
         stage += 1;
     }
 
