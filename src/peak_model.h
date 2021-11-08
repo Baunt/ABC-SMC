@@ -6,24 +6,25 @@
 #define ABC_SMC_ALGORITHM_PEAK_MODEL_H
 
 #include <vector>
+#include "../include/third-party-library/Eigen/Core"
 
 class PeakModel {
 private:
-    std::vector<double> p_x;
+    Eigen::VectorXd p_x;
     double p_x0;
     double p_fwhm;
     double p_intensity;
-    double p_npix;
+    int p_npix;
 public:
-    std::vector<double> Gaussian();
+    Eigen::VectorXd Gaussian();
 
-    std::vector<double> GaussianNonOptimized();
+//    std::vector<double> GaussianNonOptimized();
 
-    std::vector<double> Lorenzt();
+    Eigen::VectorXd Lorenzt();
 
-    std::vector<double> LorenztNonOptimized();
+//    std::vector<double> LorenztNonOptimized();
 
-    PeakModel(std::vector<double> x, double x0, double fwhm, double intensity, int npix)
+    PeakModel(Eigen::VectorXd x, double x0, double fwhm, double intensity, int npix)
     {
         p_x = x;
         p_x0 = x0;

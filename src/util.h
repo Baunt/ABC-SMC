@@ -10,33 +10,7 @@
 #include <random>
 #include <map>
 #include "../include/third-party-library/Eigen/Core"
-std::vector<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues);
-
-template<typename T> std::vector<double> linspace(T start_in, T end_in, int num_in){
-
-    std::vector<double> linspaced;
-
-    auto start = static_cast<double>(start_in);
-    auto end = static_cast<double>(end_in);
-    auto num = static_cast<double>(num_in);
-
-    if (num == 0) { return linspaced; }
-    if (num == 1)
-    {
-        linspaced.push_back(start);
-        return linspaced;
-    }
-
-    double delta = (end - start) / (num - 1);
-
-    for(int i=0; i < num-1; ++i)
-    {
-        linspaced.push_back(start + delta * i);
-    }
-    linspaced.push_back(end); // I want to ensure that start and end
-    // are exactly the same as the input
-    return linspaced;
-}
+Eigen::VectorXd getDistribution(double x_mu, double x_sigma, size_t numberOfValues);
 
 std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>> &m);
 
@@ -48,15 +22,15 @@ std::vector<std::pair<int, double>> sortByAscending(std::map<int, double>& M);
 
 void histogram(std::vector<double> data, int nbins = 20 );
 
-std::vector<int> randomWeightedIndices(int draws, std::vector<double> weights);
+Eigen::VectorXi randomWeightedIndices(int draws, Eigen::VectorXd weights);
 
 std::vector<double> resampling(std::vector<double> vector, std::vector<int> indices);
 
-std::vector<std::vector<double>> resampling(std::vector<std::vector<double>> vector, std::vector<int> indices);
+Eigen::MatrixXd resampling(Eigen::MatrixXd vector, Eigen::VectorXi indices);
 
 double getUniformRandomNumber();
 
-std::vector<double> staticpeakmodel(std::vector<double> x, Eigen::VectorXd params);
+Eigen::VectorXd staticpeakmodel(Eigen::VectorXd x, Eigen::VectorXd params);
 
 void populationstatistics(Eigen::MatrixXd population);
 

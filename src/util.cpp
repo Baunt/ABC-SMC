@@ -1,32 +1,31 @@
 //
 // Created by balint.galgoczi on 2021.08.10..
 //
+#define _USE_MATH_DEFINES
 #include <algorithm>
 #include <map>
 #include "util.h"
 #include <set>
 #include <iomanip>
 #include <random>
+#include <cstdlib>
 
-std::vector<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues){
-    // shortened compared to your example:
+Eigen::VectorXd getDistribution(double x_mu, double x_sigma, size_t numberOfValues){
     std::mt19937 gen((std::random_device())());
-    // create temporary (anonymous)     ^^
-    // instance and call it immediately    ^^
-    // afterwards
-
     std::normal_distribution<double> nd(x_mu, x_sigma);
     std::vector<double> result;
     result.reserve(numberOfValues);
     while(numberOfValues-- > 0)
     {
-        // shorter than above: using result of previous
-        // function (functor!) call directly as argument to next one
         result.push_back(nd(gen));
     }
 
-    // finally something familiar from python:
-    return result;
+    Eigen::VectorXd res(result.capacity());
+    for (int i = 0; i < result.capacity(); ++i) {
+        res(i) = result[i];
+    }
+
+    return res;
 }
 
 std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>> &m)
@@ -92,22 +91,22 @@ std::vector<std::pair<int, double>> sortByAscending(std::map<int, double>& M)
 }
 
 
-std::vector<int> randomWeightedIndices(int draws, std::vector<double> weights)
+Eigen::VectorXi randomWeightedIndices(int draws, Eigen::VectorXd weights)
 {
-    int nweights = weights.capacity();
-    std::vector<int> returnedindices(draws, 0);
-    std::vector<double> cumulativeWeights(nweights, 0.0);
+    int nweights = weights.size();
+    Eigen::VectorXi returnedindices(draws);
+    Eigen::VectorXd cumulativeWeights(nweights);
 
     std::random_device randomDevice;
     std::mt19937 randomGen(randomDevice());
     std::uniform_real_distribution<double> uniformdistribution(0.0, 1.0);
 
     // calculate the cumulative weights
-    double s = weights[0];
-    cumulativeWeights[0] = s;
+    double s = weights(0);
+    cumulativeWeights(0) = s;
     for (int i = 1; i < nweights; ++i) {       
-        s += weights[i];     
-        cumulativeWeights[i] = s;
+        s += weights(i);
+        cumulativeWeights(i) = s;
     }
 
     // for each random draw
@@ -115,8 +114,8 @@ std::vector<int> randomWeightedIndices(int draws, std::vector<double> weights)
         double r = uniformdistribution(randomGen);
         // this is not optimal, use binary search instead
         for (int k = 0; k < nweights; ++k) {
-            if (r < cumulativeWeights[k]) {
-                returnedindices[i] = k;
+            if (r < cumulativeWeights(k)) {
+                returnedindices(i) = k;
                 break;
             }
         }
@@ -213,32 +212,32 @@ std::vector<double> resampling(std::vector<double> vector, std::vector<int> indi
     return resampledResult;
 }
 
-std::vector<std::vector<double>> resampling(std::vector<std::vector<double>> vector, std::vector<int> indices){
-    std::vector<std::vector<double>> resampledResult(vector.capacity());
-    for (int i = 0; i < vector.capacity(); ++i) {
-        resampledResult[i]= vector[indices[i]];
+Eigen::MatrixXd resampling(Eigen::MatrixXd vector, Eigen::VectorXi indices){
+    Eigen::MatrixXd resampledResult(vector);
+    for (int i = 0; i < vector.cols(); ++i) {
+        resampledResult(i)= vector(indices(i));
     }
+
     return resampledResult;
 }
 
 
-std::vector<double> staticpeakmodel(std::vector<double> x, Eigen::VectorXd params)
+Eigen::VectorXd staticpeakmodel(Eigen::VectorXd x, Eigen::VectorXd params)
 {
-    int n = x.capacity();
-    std::vector<double> spectrum(n, 0.0);
+    Eigen::VectorXd spectrum(x.size());
 
-    double sigma = std::abs(params[1]) / 2.35482;
-    double c0 = params[2] / (sigma * 2.5066283);
+    double sigma = std::abs(params(1)) / 2.35482;
+    double c0 = params(2) / (sigma * 2.5066283);
     double c1 = 0.5 / (sigma * sigma);
 
-    double gamma = std::abs(params[4]) / 2;
+    double gamma = std::abs(params(4)) / 2;
     double inverseGamma = 1.0 / gamma;
 
 
-    for (int i = 0; i < n; ++i)
+    for (int i = 0; i < x.size(); ++i)
     {
-        spectrum[i] = c0 * std::exp(-c1 * (x[i] - params[0]) * (x[i] - params[0]));    
-        spectrum[i] += params[5] / (gamma * M_PI * (1.0 + ((x[i] - params[3]) * inverseGamma) * ((x[i] - params[3]) * inverseGamma)));
+        spectrum(i) = c0 * std::exp(-c1 * (x(i) - params(0)) * (x(i) - params(0)));
+        spectrum(i) += params(5) / (gamma * M_PI * (1.0 + ((x(i) - params(3)) * inverseGamma) * ((x(i) - params(3)) * inverseGamma)));
     }
     return spectrum;
 }

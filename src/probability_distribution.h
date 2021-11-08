@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include "../include/third-party-library/Eigen/Core"
 
 class ProbabilityDistribution {
 private:
@@ -41,7 +42,7 @@ public:
     }
 
     double LogP(double value);
-    std::vector<double> Sample(int draws);
+    Eigen::VectorXd Sample(int draws);
 };
 
 
