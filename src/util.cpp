@@ -43,10 +43,9 @@ std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>
 double arithmetic_mean(const std::vector<double> &vector){
     double sum = 0;
     for (int i = 0; i < vector.capacity(); i++)
-    {
+    {   
         sum += vector[i];
     }
-
     return sum / vector.capacity();
 }
 
@@ -220,4 +219,62 @@ std::vector<std::vector<double>> resampling(std::vector<std::vector<double>> vec
         resampledResult[i]= vector[indices[i]];
     }
     return resampledResult;
+}
+
+
+std::vector<double> staticpeakmodel(std::vector<double> x, Eigen::VectorXd params)
+{
+    int n = x.capacity();
+    std::vector<double> spectrum(n, 0.0);
+
+    double sigma = std::abs(params[1]) / 2.35482;
+    double c0 = params[2] / (sigma * 2.5066283);
+    double c1 = 0.5 / (sigma * sigma);
+
+    double gamma = std::abs(params[4]) / 2;
+    double inverseGamma = 1.0 / gamma;
+
+
+    for (int i = 0; i < n; ++i)
+    {
+        spectrum[i] = c0 * std::exp(-c1 * (x[i] - params[0]) * (x[i] - params[0]));    
+        spectrum[i] += params[5] / (gamma * M_PI * (1.0 + ((x[i] - params[3]) * inverseGamma) * ((x[i] - params[3]) * inverseGamma)));
+    }
+    return spectrum;
+}
+
+
+void populationstatistics(Eigen::MatrixXd population)
+{
+    Eigen::VectorXd means = population.colwise().mean();    
+    Eigen::MatrixXd centered = population.rowwise() - means.adjoint();
+    Eigen::MatrixXd cov = (centered.adjoint() * centered) / double(population.rows());
+    int n = cov.rows();
+    std::cout << "      ";
+    for (int i = 0; i<n; ++i)
+    {
+       std::cout << std::setw(6) << std::fixed << std::setprecision(4) << means(i) << "(" << std::sqrt(cov(i,i)) << ")  ";
+    }
+    std::cout << "\n";
+}
+
+
+void populationstatistics(std::vector<std::vector<double>> population)
+{
+    int draws = population.capacity();
+    int nparams = population[0].capacity();
+    for (int i = 0; i < nparams; ++i) {
+        double mean = 0.0;
+        double stdev = 0.0;
+        for (int j = 0; j < draws; ++j) {
+            mean += population[j][i];
+        }
+        mean /= double(draws);
+        for (int j = 0; j < draws; ++j) {
+            stdev += (population[j][i]-mean) * (population[j][i]-mean);
+        }
+        stdev = std::sqrt(stdev / double(draws));
+        std::cout << std::setw(6) << std::fixed << std::setprecision(4) << mean << "(" << stdev << ")  ";
+    }
+    std::cout << "\n";
 }

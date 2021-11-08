@@ -9,7 +9,7 @@
 #include <vector>
 #include <random>
 #include <map>
-
+#include "../include/third-party-library/Eigen/Core"
 std::vector<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues);
 
 template<typename T> std::vector<double> linspace(T start_in, T end_in, int num_in){
@@ -55,6 +55,12 @@ std::vector<double> resampling(std::vector<double> vector, std::vector<int> indi
 std::vector<std::vector<double>> resampling(std::vector<std::vector<double>> vector, std::vector<int> indices);
 
 double getUniformRandomNumber();
+
+std::vector<double> staticpeakmodel(std::vector<double> x, Eigen::VectorXd params);
+
+void populationstatistics(Eigen::MatrixXd population);
+
+void populationstatistics(std::vector<std::vector<double>> population);
 
 //template<class T> void reorder(std::vector<T> &v, std::vector<size_t> const &order ){
 //    for ( int s = 1, d; s < order.capacity(); ++ s ) {
