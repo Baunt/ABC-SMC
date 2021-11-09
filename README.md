@@ -28,7 +28,7 @@ Simplest C++ plotting library --> [matplotlib-cpp](https://github.com/lava/matpl
 
 - [Understanding the Covariance Matrix](https://datascienceplus.com/understanding-the-covariance-matrix/)
 - [Eigen tutorial](https://dritchie.github.io/csci2240/assignments/eigen_tutorial.pdf)
-
+- [Eigen cheat sheet](https://gist.github.com/gocarlos/c91237b02c120c6319612e42fa196d77)
 ## TODO
 
 Check this library. Maybe it is faster than Eigen or vanilla C++
