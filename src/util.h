@@ -10,8 +10,23 @@
 #include <random>
 #include <map>
 #include "../include/third-party-library/Eigen/Core"
-Eigen::VectorXd getDistribution(double x_mu, double x_sigma, size_t numberOfValues);
+#include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 
+Eigen::Array<double, Eigen::Dynamic, 1> getDistribution(double x_mu, double x_sigma, size_t numberOfValues);
+
+Eigen::Array<int, Eigen::Dynamic, 1> randomWeightedIndices(int draws, Eigen::Array<double, Eigen::Dynamic, 1>& weights);
+
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(Eigen::Array<double, Eigen::Dynamic, 1>& vector, Eigen::Array<int, Eigen::Dynamic, 1>& indices);
+
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>& vector, Eigen::Array<int, Eigen::Dynamic, 1>& indices);
+
+Eigen::Array<double, Eigen::Dynamic, 1> staticPeakModel(Eigen::Array<double, Eigen::Dynamic, 1>& x, Eigen::Array<double, Eigen::Dynamic, 1>& params);
+
+void populationStatistics(Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>& population);
+
+pcg32 getRandomGenerator();
+
+// TODO unused functions
 std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>> &m);
 
 double arithmetic_mean(const std::vector<double> &vector);
@@ -22,17 +37,9 @@ std::vector<std::pair<int, double>> sortByAscending(std::map<int, double>& M);
 
 void histogram(std::vector<double> data, int nbins = 20 );
 
-Eigen::VectorXi randomWeightedIndices(int draws, Eigen::VectorXd weights);
-
 std::vector<double> resampling(std::vector<double> vector, std::vector<int> indices);
 
-Eigen::MatrixXd resampling(Eigen::MatrixXd vector, Eigen::VectorXi indices);
-
 double getUniformRandomNumber();
-
-Eigen::VectorXd staticPeakModel(Eigen::VectorXd x, Eigen::VectorXd params);
-
-void populationStatistics(Eigen::MatrixXd population);
 
 void populationStatistics(std::vector<std::vector<double>> population);
 
@@ -63,4 +70,5 @@ void populationStatistics(std::vector<std::vector<double>> population);
 //        }
 //    }
 //}
+
 #endif //ABC_SMC_ALGORITHM_UTIL_H

@@ -25,19 +25,20 @@ int main(int argc, char** argv) {
     double real_fwhm1 = 0.20;
     double real_intensity1 = 0.5;
 
-    Eigen::VectorXd real_y(npix);
-    Eigen::VectorXd y_sim(npix);
+    Eigen::Array<double, Eigen::Dynamic, 1> real_y(npix);
+
+    Eigen::Array<double, Eigen::Dynamic, 1> y_sim(npix);
 
     //simulated spectrum
 
-    Eigen::VectorXd x = Eigen::VectorXd::LinSpaced(npix, 0, 1);
+    Eigen::Array<double, Eigen::Dynamic, 1> x = Eigen::VectorXd::LinSpaced(npix, 0, 1);
 
-    Eigen::VectorXd noise = getDistribution(0.0, 1.0, npix);
+    Eigen::Array<double, Eigen::Dynamic, 1> noise = getDistribution(0.0, 1.0, npix);
 
     PeakModel gaussianPeakModel = PeakModel(x, real_x0, real_fwhm0, real_intensity0, npix);
-    Eigen::VectorXd gaussianModel = gaussianPeakModel.Gaussian();
+    Eigen::Array<double, Eigen::Dynamic, 1> gaussianModel = gaussianPeakModel.Gaussian();
     PeakModel lorentzianPeakModel = PeakModel(x, real_x1, real_fwhm1, real_intensity1, npix);
-    Eigen::VectorXd lorentzianModel = lorentzianPeakModel.Lorenzt();
+    Eigen::Array<double, Eigen::Dynamic, 1> lorentzianModel = lorentzianPeakModel.Lorenzt();
 
     real_y = gaussianModel + lorentzianModel;
 
@@ -67,8 +68,8 @@ int main(int argc, char** argv) {
     int draws = 1000;
     double epsilon = 0.01;
 
-    Eigen::VectorXd prior_likelihoods(draws);
-    Eigen::MatrixXd posteriors(draws , nparams);
+    Eigen::Array<double, Eigen::Dynamic, 1> prior_likelihoods(draws);
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> posteriors(draws , nparams);
 
     /*   x0 fwhm0 int0 x1 fwhm1 int2
        [ 0    0    0   0    0    0 ]
@@ -93,15 +94,14 @@ int main(int argc, char** argv) {
     int max_steps = n_steps;
     int dimension = nparams;
 
-    Eigen::VectorXd acc_per_chain(draws);
-    Eigen::VectorXd scalings(draws);
-    for (int i = 0; i < draws; ++i) {
-        double factor = (2.38 * 2.38) / nparams;
-        if (factor < 1){
-            scalings(i) = factor;
-        } else{
-            scalings(i) = 1;
-        }
+    Eigen::Array<double, Eigen::Dynamic, 1> acc_per_chain(draws);
+    Eigen::Array<double, Eigen::Dynamic, 1> scalings(draws);
+
+    double factor = (2.38 * 2.38) / nparams;
+    if (factor < 1){
+        scalings = factor;
+    } else{
+        scalings = 1;
     }
 
     int proposed = draws * n_steps;
@@ -120,27 +120,28 @@ int main(int argc, char** argv) {
         // histogram(tmp, 20);
     }
 
-    Eigen::MatrixXd init_population = posteriors;
-    Eigen::VectorXd likelihoods(draws);
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> init_population = posteriors;
+    Eigen::Array<double, Eigen::Dynamic, 1> likelihoods(draws);
 
     std::cout << "Starting population statistics: \n    ";
     populationStatistics(posteriors);
     std::cout << "\n";
 
     for (int i = 0; i < draws; ++i) {
+        //TODO
         for (int j = 0; j < posteriors.row(i).size(); ++j) {
             prior_likelihoods(i) += normalDistribution[j].LogP(init_population(i, j));
         }
 
         PeakModel gaussModel = PeakModel(x, init_population(i, 0), init_population(i, 1), init_population(i, 2), npix);
-        Eigen::VectorXd gauss = gaussModel.Gaussian();
+        Eigen::Array<double, Eigen::Dynamic, 1> gauss = gaussModel.Gaussian();
         PeakModel lorentzModel = PeakModel(x, init_population(i, 3), init_population(i, 4), init_population(i, 5), npix);
-        Eigen::VectorXd lorentz = lorentzModel.Lorenzt();
+        Eigen::Array<double, Eigen::Dynamic, 1> lorentz = lorentzModel.Lorenzt();
         y_sim = gauss + lorentz;
 
         //matplotlibcpp::plot(y_sim);
 
-        Eigen::VectorXd spectrumDiffs(npix);
+        Eigen::Array<double, Eigen::Dynamic, 1> spectrumDiffs(npix);
         spectrumDiffs = (real_y - y_sim).cwiseAbs();
 
         double mean_abs_error = spectrumDiffs.mean();
@@ -149,8 +150,7 @@ int main(int argc, char** argv) {
     }
 
     // this is a uniform random generator used for the random steps:
-    std::random_device randomDevice;
-    std::mt19937 randomGen(randomDevice());
+    pcg32 randomGen = getRandomGenerator();
     std::normal_distribution<double> std_dist(0.0, 1.0); // normal distribution with mu=0, sigma=1
     std::uniform_real_distribution<double> uni_dist(0.0, 1.0); // uniform ditribution between: 0 <= r < 1
 
@@ -171,11 +171,9 @@ int main(int argc, char** argv) {
 
         int rN = int(round(int(likelihoods.size()) * threshold));
 
-        Eigen::VectorXd ll_diffs(likelihoods.size());
+        Eigen::Array<double, Eigen::Dynamic, 1> ll_diffs(likelihoods.size());
         double max = likelihoods.maxCoeff();
-        for (int i = 0; i < likelihoods.size(); ++i) {
-            ll_diffs(i) = likelihoods(i) - max;
-        }
+        ll_diffs = likelihoods - max;
 
 //    ' ___________________________________________'
 //    ' |                                         |'
@@ -183,23 +181,19 @@ int main(int argc, char** argv) {
 //    ' |_________________________________________|'
         #pragma region importance_weights        
         std::cout << "    Stage " << stage << " - Importance weights\n";
-        Eigen::VectorXd weights_un(ll_diffs.size());
-        Eigen::VectorXd weights(ll_diffs.size());
+        Eigen::Array<double, Eigen::Dynamic, 1> weights_un(ll_diffs.size());
+        Eigen::Array<double, Eigen::Dynamic, 1> weights(ll_diffs.size());
 
         while ((upBeta - lowBeta) > 1e-6 ){
             double sum_of_weights_un = 0;
             double sum_of_square_weights = 0;
             newBeta = (lowBeta + upBeta) / 2.0;
 
-            for (int i = 0; i < ll_diffs.size(); ++i) {
-                weights_un(i) = exp((newBeta - oldBeta) * ll_diffs(i));
-                sum_of_weights_un += weights_un(i);
-            }
+            weights_un = exp(newBeta - oldBeta) * ll_diffs;
+            sum_of_weights_un = weights_un.sum();
 
-            for (int i = 0; i < weights_un.size(); ++i) {
-                weights(i) = weights_un(i) / sum_of_weights_un;
-                sum_of_square_weights += weights(i) * weights(i);
-            }
+            weights = weights_un / sum_of_weights_un;
+            sum_of_square_weights = sum_of_square_weights + weights.square().sum();
 
             int ESS = int(round(1.0 / sum_of_square_weights));
             if (ESS == rN){
@@ -216,15 +210,9 @@ int main(int argc, char** argv) {
         if (newBeta >= 1){
             double sum_of_weights_un = 0;
             newBeta = 1;
-
-            for (int i = 0; i < ll_diffs.size(); ++i) {
-                weights_un(i) = exp((newBeta - oldBeta) * ll_diffs(i));
-                sum_of_weights_un += weights_un(i);
-            }
-
-            for (int i = 0; i < weights_un.size(); ++i) {
-                weights(i) = weights_un(i) / sum_of_weights_un;
-            }
+            weights_un = exp(newBeta - oldBeta) * ll_diffs;
+            sum_of_weights_un = weights_un.sum();
+            weights = weights_un / sum_of_weights_un;
         }
 
         beta = newBeta;
@@ -237,17 +225,16 @@ int main(int argc, char** argv) {
 
         #pragma region resampling
         std::cout << "    Stage " << stage << " - Resampling\n";
-        auto resamplingIndexes = randomWeightedIndices(draws, weights);
+        //TODO
+        Eigen::Array<int, Eigen::Dynamic, 1> resamplingIndexes = randomWeightedIndices(draws, weights);
         posteriors = resampling(posteriors, resamplingIndexes);
         prior_likelihoods = resampling(prior_likelihoods, resamplingIndexes);
         likelihoods = resampling(likelihoods, resamplingIndexes);
         scalings = resampling(scalings, resamplingIndexes);
         acc_per_chain = resampling(acc_per_chain, resamplingIndexes);
 
-        Eigen::VectorXd tempered_logp(draws);
-        for (int i = 0; i < draws; ++i) {
-            tempered_logp(i) = prior_likelihoods(i) + likelihoods(i) * beta;
-        }
+        Eigen::Array<double, Eigen::Dynamic, 1> tempered_logp(draws);
+        tempered_logp = prior_likelihoods + likelihoods * beta;
 
         Eigen::MatrixXd centered = posteriors.rowwise() - posteriors.colwise().mean();
         Eigen::MatrixXd cov = (centered.adjoint() * centered) / double(posteriors.rows() - 1);
@@ -262,24 +249,18 @@ int main(int argc, char** argv) {
         #pragma region tuning
         std::cout << "    Stage " << stage << " - Tuning\n";   
         if (stage > 0){
-            auto ave_scalings = std::exp(std::log(scalings.mean() + acc_per_chain.mean() - 0.234));
-
+            double ave_scalings = exp(log(scalings.mean() + acc_per_chain.mean() - 0.234));
 
             std::cout << "      <scalings> = " << scalings.mean() << "\n";
             std::cout << "      <acc_per_chain> = " << acc_per_chain.mean() << "\n";
             std::cout << "      ave_scaling = " << ave_scalings << "\n";
 
-
-            for (int i = 0; i < scalings.size(); ++i) {
-                scalings(i) = 0.5 * (ave_scalings + std::exp(std::log(scalings(i)) + (acc_per_chain(i) - 0.234)));
-            }
-
+            scalings = 0.5 * (ave_scalings + exp(scalings.log() + (acc_per_chain - 0.234)));
             std::cout << "      <scalings> = " << scalings.mean() << "\n";
-
 
             if (tune_steps){
                 acc_rate = std::max(1.0 / proposed, acc_rate);
-                int t = (int) round((std::log(1.0 - p_acc_rate) / std::log(1.0 - acc_rate)));
+                int t = (int) round((log(1.0 - p_acc_rate) / log(1.0 - acc_rate)));
                 n_steps = std::min(max_steps, std::max(2, t));
             }
             proposed = draws * n_steps;
@@ -308,10 +289,11 @@ int main(int argc, char** argv) {
                 std::cout << "    err        pl            ll          beta     logp_0    logp_1          d_logp         r\n";
             }
 
-
+            //TODO melyik legyen?
             //Eigen::MatrixXd randomsForDeltas = Eigen::MatrixXd::Random(n_steps, 6);
             auto rand_fn = [&](){return std_dist(randomGen);};                                 // lambda that generates random numbers
             Eigen::MatrixXd random_matrix = Eigen::MatrixXd::NullaryExpr(n_steps, 6, rand_fn); // matrix expression
+
             Eigen::MatrixXd randomsForDeltas = random_matrix;                                  // saving the elements to a matrix
             Eigen::MatrixXd deltas = randomsForDeltas * llt.matrixLLT();            
             deltas *= scalings[draw];
@@ -322,17 +304,18 @@ int main(int argc, char** argv) {
             double old_likelihood = likelihoods[draw];
             double old_prior = prior_likelihoods[draw];
             double old_tempered_logp = tempered_logp[draw];
-            Eigen::VectorXd q_old = posteriors.row(draw);
+            Eigen::Array<double, Eigen::Dynamic, 1> q_old = posteriors.row(draw);
 
             for (int i = 0; i < n_steps; ++i) {
-                Eigen::VectorXd delta = deltas.row(i);
-                Eigen::VectorXd q_new = q_old + delta;
+                Eigen::Array<double, Eigen::Dynamic, 1> delta = deltas.row(i);
+                Eigen::Array<double, Eigen::Dynamic, 1> q_new = q_old + delta;
                 y_sim = staticPeakModel(x, q_new);
-                Eigen::VectorXd spectrumDiffs(npix);
-                for (int j = 0; j < real_y.size(); ++j) {
-                    spectrumDiffs(j) = std::abs(real_y(j) - y_sim(j));
-                }
+                Eigen::Array<double, Eigen::Dynamic, 1> spectrumDiffs(npix);
+
+                spectrumDiffs = abs(real_y - y_sim);
+
                 double pl = 0.0;
+                //TODO
                 for (int dist = 0; dist < normalDistribution.capacity(); ++dist) {
                     pl += normalDistribution[dist].LogP(q_new[dist]);
                 }
@@ -372,10 +355,11 @@ int main(int argc, char** argv) {
             tempered_logp(draw) = old_tempered_logp;
             acc_per_chain(draw) = double(accepted) / double(n_steps);
             posteriors.row(draw) = q_old;
-            for (int i = 0; i<nparams; ++i)
+
+            for (int i = 0; i < nparams; ++i)
             {
                 posteriors(draw, i) = q_old[i];
-            }            
+            }
         }
 
         populationStatistics(posteriors);
