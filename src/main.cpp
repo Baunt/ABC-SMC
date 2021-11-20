@@ -25,6 +25,10 @@ int main(int argc, char** argv) {
     double real_fwhm1 = 0.20;
     double real_intensity1 = 0.5;
 
+    //random generator
+    pcg_extras::seed_seq_from<std::random_device> seed_source;
+    pcg32 rng(seed_source);
+
     Eigen::Array<double, Eigen::Dynamic, 1> real_y(npix);
 
     Eigen::Array<double, Eigen::Dynamic, 1> y_sim(npix);
@@ -33,7 +37,7 @@ int main(int argc, char** argv) {
 
     Eigen::Array<double, Eigen::Dynamic, 1> x = Eigen::VectorXd::LinSpaced(npix, 0, 1);
 
-    Eigen::Array<double, Eigen::Dynamic, 1> noise = getDistribution(0.0, 1.0, npix);
+    Eigen::Array<double, Eigen::Dynamic, 1> noise = getDistribution(0.0, 1.0, npix, rng);
 
     PeakModel gaussianPeakModel = PeakModel(x, real_x0, real_fwhm0, real_intensity0, npix);
     Eigen::Array<double, Eigen::Dynamic, 1> gaussianModel = gaussianPeakModel.Gaussian();
@@ -113,7 +117,7 @@ int main(int argc, char** argv) {
     '--------------------------------------------------------------------------------------------------------'*/
 
     for (int i = 0; i < normalDistribution.capacity(); ++i) {
-        auto tmp = normalDistribution[i].Sample(draws);
+        auto tmp = normalDistribution[i].Sample(draws, rng);
         for (int j = 0; j < draws; ++j) {
             posteriors(j,i) = tmp[j];
         }
@@ -151,8 +155,6 @@ int main(int argc, char** argv) {
         likelihoods(i) = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) + log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
     }
 
-    // this is a uniform random generator used for the random steps:
-    pcg32 randomGen = getRandomGenerator();
     std::normal_distribution<double> std_dist(0.0, 1.0); // normal distribution with mu=0, sigma=1
     std::uniform_real_distribution<double> uni_dist(0.0, 1.0); // uniform ditribution between: 0 <= r < 1
 
@@ -228,7 +230,7 @@ int main(int argc, char** argv) {
         #pragma region resampling
         std::cout << "    Stage " << stage << " - Resampling\n";
         //TODO
-        Eigen::Array<int, Eigen::Dynamic, 1> resamplingIndexes = randomWeightedIndices(draws, weights);
+        Eigen::Array<int, Eigen::Dynamic, 1> resamplingIndexes = randomWeightedIndices(draws, weights, rng);
         posteriors = resampling(posteriors, resamplingIndexes);
         prior_likelihoods = resampling(prior_likelihoods, resamplingIndexes);
         likelihoods = resampling(likelihoods, resamplingIndexes);
@@ -293,7 +295,7 @@ int main(int argc, char** argv) {
 
             //TODO melyik legyen?
             //Eigen::MatrixXd randomsForDeltas = Eigen::MatrixXd::Random(n_steps, 6);
-            auto rand_fn = [&](){return std_dist(randomGen);};                                 // lambda that generates random numbers
+            auto rand_fn = [&](){return std_dist(rng);};                                 // lambda that generates random numbers
             Eigen::MatrixXd random_matrix = Eigen::MatrixXd::NullaryExpr(n_steps, 6, rand_fn); // matrix expression
 
             Eigen::MatrixXd randomsForDeltas = random_matrix;                                  // saving the elements to a matrix
@@ -326,7 +328,7 @@ int main(int argc, char** argv) {
                 double new_tempered_logp = pl + ll * beta;
                 double delta_tempered_logp = new_tempered_logp - tempered_logp[draw];
 
-                double r = log(uni_dist(randomGen));
+                double r = log(uni_dist(rng));
                 // std::cout << r << "  " << delta_tempered_logp << "\n";
                 if (r < delta_tempered_logp){
                     q_old = q_new;
@@ -373,10 +375,6 @@ int main(int argc, char** argv) {
         stage += 1;
         if (stage > 20) {break;}
     }
-
-
-
     // matplotlibcpp::show();
-
     return 0;
 }

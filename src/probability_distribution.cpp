@@ -16,6 +16,6 @@ double NormalDistribution::LogP(double value) {
             * 0.5;
 }
 
-Eigen::VectorXd NormalDistribution::Sample(int draws) {
-    return getDistribution(NormalDistribution::p_mean, NormalDistribution::p_sigma, draws);
+Eigen::Array<double, Eigen::Dynamic, 1> NormalDistribution::Sample(int draws, pcg32 &rng) {
+    return getDistribution(NormalDistribution::p_mean, NormalDistribution::p_sigma, draws, rng);
 }

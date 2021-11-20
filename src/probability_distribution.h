@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include "../include/third-party-library/Eigen/Core"
+#include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 
 class ProbabilityDistribution {
 private:
@@ -42,7 +43,7 @@ public:
     }
 
     double LogP(double value);
-    Eigen::VectorXd Sample(int draws);
+    Eigen::Array<double, Eigen::Dynamic, 1> Sample(int draws, pcg32& rng);
 };
 
 

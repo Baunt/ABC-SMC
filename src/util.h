@@ -12,19 +12,17 @@
 #include "../include/third-party-library/Eigen/Core"
 #include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 
-Eigen::Array<double, Eigen::Dynamic, 1> getDistribution(double x_mu, double x_sigma, size_t numberOfValues);
+Eigen::Array<double, Eigen::Dynamic, 1> getDistribution(double x_mu, double x_sigma, size_t numberOfValues, pcg32& rng);
 
-Eigen::Array<int, Eigen::Dynamic, 1> randomWeightedIndices(int draws, Eigen::Array<double, Eigen::Dynamic, 1>& weights);
+Eigen::Array<int, Eigen::Dynamic, 1> randomWeightedIndices(int draws, const Eigen::Array<double, Eigen::Dynamic, 1>& weights, pcg32& rng);
 
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(Eigen::Array<double, Eigen::Dynamic, 1>& vector, Eigen::Array<int, Eigen::Dynamic, 1>& indices);
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(const Eigen::Array<double, Eigen::Dynamic, 1>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices);
 
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>& vector, Eigen::Array<int, Eigen::Dynamic, 1>& indices);
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices);
 
-Eigen::Array<double, Eigen::Dynamic, 1> staticPeakModel(Eigen::Array<double, Eigen::Dynamic, 1>& x, Eigen::Array<double, Eigen::Dynamic, 1>& params);
+Eigen::Array<double, Eigen::Dynamic, 1> staticPeakModel(const Eigen::Array<double, Eigen::Dynamic, 1>& x, const Eigen::Array<double, Eigen::Dynamic, 1>& params);
 
-void populationStatistics(Eigen::MatrixXd& population);
-
-pcg32 getRandomGenerator();
+void populationStatistics(const Eigen::MatrixXd& population);
 
 // TODO unused functions
 std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>> &m);

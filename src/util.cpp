@@ -12,8 +12,7 @@
 #include <random>
 #include <cstdlib>
 
-Eigen::Array<double, Eigen::Dynamic, 1> getDistribution(double x_mu, double x_sigma, size_t numberOfValues){
-    pcg32 rng = getRandomGenerator();
+Eigen::Array<double, Eigen::Dynamic, 1> getDistribution(double x_mu, double x_sigma, size_t numberOfValues, pcg32& rng){
     std::normal_distribution<double> nd(x_mu, x_sigma);
     std::vector<double> result;
     result.reserve(numberOfValues);
@@ -30,27 +29,18 @@ Eigen::Array<double, Eigen::Dynamic, 1> getDistribution(double x_mu, double x_si
     return res;
 }
 
-pcg32 getRandomGenerator(){
-   pcg_extras::seed_seq_from<std::random_device> seed_source;
-   pcg32 rng(seed_source);
-
-   return rng;
-}
-
-Eigen::Array<int, Eigen::Dynamic, 1>  randomWeightedIndices(int draws, Eigen::Array<double, Eigen::Dynamic, 1>& weights)
+Eigen::Array<int, Eigen::Dynamic, 1>  randomWeightedIndices(int draws, const Eigen::Array<double, Eigen::Dynamic, 1>& weightsOut, pcg32& rng)
 {
-    int nweights = weights.size();
+    int nweights = weightsOut.size();
     Eigen::Array<int, Eigen::Dynamic, 1> returnedIndices(draws);
     Eigen::Array<double, Eigen::Dynamic, 1> cumulativeWeights(nweights);
-
-    pcg32 rng = getRandomGenerator();
     std::uniform_real_distribution<double> uniformDistribution(0.0, 1.0);
 
-    // calculate the cumulative weights
-    double s = weights(0);
+    // calculate the cumulative weightsOut
+    double s = weightsOut(0);
     cumulativeWeights(0) = s;
     for (int i = 1; i < nweights; ++i) {
-        s += weights(i);
+        s += weightsOut(i);
         cumulativeWeights(i) = s;
     }
 
@@ -68,7 +58,7 @@ Eigen::Array<int, Eigen::Dynamic, 1>  randomWeightedIndices(int draws, Eigen::Ar
     return returnedIndices;
 }
 
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(Eigen::Array<double, Eigen::Dynamic, 1>& vector, Eigen::Array<int, Eigen::Dynamic, 1>& indices){
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(const Eigen::Array<double, Eigen::Dynamic, 1>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices){
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampledResult(vector);
     for (int i = 0; i < vector.cols(); ++i) {
         resampledResult(i)= vector(indices(i));
@@ -77,7 +67,7 @@ Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(Eigen::Array<dou
     return resampledResult;
 }
 
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>& vector, Eigen::Array<int, Eigen::Dynamic, 1>& indices){
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices){
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampledResult(vector);
     for (int i = 0; i < vector.cols(); ++i) {
         resampledResult(i)= vector(indices(i));
@@ -86,7 +76,7 @@ Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(Eigen::Array<dou
     return resampledResult;
 }
 
-Eigen::Array<double, Eigen::Dynamic, 1> staticPeakModel(Eigen::Array<double, Eigen::Dynamic, 1>& x, Eigen::Array<double, Eigen::Dynamic, 1>& params)
+Eigen::Array<double, Eigen::Dynamic, 1> staticPeakModel(const Eigen::Array<double, Eigen::Dynamic, 1>& x, const Eigen::Array<double, Eigen::Dynamic, 1>& params)
 {
     Eigen::Array<double, Eigen::Dynamic, 1> spectrum(x.size());
 
@@ -106,7 +96,7 @@ Eigen::Array<double, Eigen::Dynamic, 1> staticPeakModel(Eigen::Array<double, Eig
 }
 
 //TODO
-void populationStatistics(Eigen::MatrixXd& population)
+void populationStatistics(const Eigen::MatrixXd& population)
 {
     Eigen::VectorXd means = population.colwise().mean();
     Eigen::MatrixXd centered = population.rowwise() - means.adjoint();
@@ -184,7 +174,8 @@ std::vector<std::pair<int, double>> sortByAscending(std::map<int, double>& M)
 }
 
 double getUniformRandomNumber(){
-    pcg32 rng = getRandomGenerator();
+    pcg_extras::seed_seq_from<std::random_device> seed_source;
+    pcg32 rng(seed_source);
     std::uniform_real_distribution<double> uniformdistribution(0.0, 1.0);
     return uniformdistribution(rng);
 }
