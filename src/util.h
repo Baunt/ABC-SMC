@@ -22,7 +22,7 @@ Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(Eigen::Array<dou
 
 Eigen::Array<double, Eigen::Dynamic, 1> staticPeakModel(Eigen::Array<double, Eigen::Dynamic, 1>& x, Eigen::Array<double, Eigen::Dynamic, 1>& params);
 
-void populationStatistics(Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>& population);
+void populationStatistics(Eigen::MatrixXd& population);
 
 pcg32 getRandomGenerator();
 

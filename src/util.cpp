@@ -105,7 +105,8 @@ Eigen::Array<double, Eigen::Dynamic, 1> staticPeakModel(Eigen::Array<double, Eig
     return spectrum;
 }
 
-void populationStatistics(Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>& population)
+//TODO
+void populationStatistics(Eigen::MatrixXd& population)
 {
     Eigen::VectorXd means = population.colwise().mean();
     Eigen::MatrixXd centered = population.rowwise() - means.adjoint();

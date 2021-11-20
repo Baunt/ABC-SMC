@@ -124,7 +124,9 @@ int main(int argc, char** argv) {
     Eigen::Array<double, Eigen::Dynamic, 1> likelihoods(draws);
 
     std::cout << "Starting population statistics: \n    ";
-    populationStatistics(posteriors);
+
+    Eigen::MatrixXd copyPosteriors = posteriors;
+    populationStatistics(copyPosteriors);
     std::cout << "\n";
 
     for (int i = 0; i < draws; ++i) {
@@ -277,8 +279,8 @@ int main(int argc, char** argv) {
         #pragma region MCMC
         std::cout << "    Stage " << stage << " - MCMC chains\n";
 
-
-        populationStatistics(posteriors);
+        Eigen::MatrixXd copyPosteriorsInMC = posteriors;
+        populationStatistics(copyPosteriorsInMC);
         double new_acc_rate = 0.0;
 
         for (int draw = 0; draw < draws; ++draw) {
@@ -362,7 +364,8 @@ int main(int argc, char** argv) {
             }
         }
 
-        populationStatistics(posteriors);
+        Eigen::MatrixXd copyPosteriorsInLoop = posteriors;
+        populationStatistics(copyPosteriorsInLoop);
         acc_rate = acc_per_chain.mean();
 
         #pragma endregion MCMC
