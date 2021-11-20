@@ -82,9 +82,9 @@ std::vector<double> divideVectorFromValue(double value, std::vector<double> vect
 //    return spectrum;
 //}
 
-Eigen::VectorXd PeakModel::Gaussian()
+Eigen::ArrayX<double> PeakModel::Gaussian()
 {
-    Eigen::VectorXd spectrum(p_npix);
+    Eigen::ArrayX<double> spectrum(p_npix);
     double sigma = std::abs(p_fwhm) / 2.35482;
     double c0 = p_intensity / (sigma * 2.5066283);
     double c1 = 0.5 / (sigma * sigma);
@@ -110,8 +110,8 @@ Eigen::VectorXd PeakModel::Gaussian()
 //    return spectrum;
 //}
 
-Eigen::VectorXd PeakModel::Lorenzt() {
-    Eigen::VectorXd spectrum(p_npix);
+Eigen::ArrayX<double> PeakModel::Lorenzt() {
+    Eigen::ArrayX<double> spectrum(p_npix);
     double gamma = std::abs(p_fwhm) / 2;
     double inverseGamma = 1.0 / gamma;
     for (int i = 0; i < p_npix; ++i) {

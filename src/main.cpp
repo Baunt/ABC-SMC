@@ -6,7 +6,6 @@
 // #include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
 #include "probability_distribution.h"
 #include "../include/third-party-library/Eigen/src/Cholesky/LLT.h"
-#include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -29,20 +28,20 @@ int main(int argc, char** argv) {
     pcg_extras::seed_seq_from<std::random_device> seed_source;
     pcg32 rng(seed_source);
 
-    Eigen::Array<double, Eigen::Dynamic, 1> real_y(npix);
+    Eigen::ArrayX<double> real_y(npix);
 
-    Eigen::Array<double, Eigen::Dynamic, 1> y_sim(npix);
+    Eigen::ArrayX<double> y_sim(npix);
 
     //simulated spectrum
 
-    Eigen::Array<double, Eigen::Dynamic, 1> x = Eigen::VectorXd::LinSpaced(npix, 0, 1);
+    Eigen::ArrayX<double> x = Eigen::VectorXd::LinSpaced(npix, 0, 1);
 
-    Eigen::Array<double, Eigen::Dynamic, 1> noise = getDistribution(0.0, 1.0, npix, rng);
+    Eigen::ArrayX<double> noise = getDistribution(0.0, 1.0, npix, rng);
 
     PeakModel gaussianPeakModel = PeakModel(x, real_x0, real_fwhm0, real_intensity0, npix);
-    Eigen::Array<double, Eigen::Dynamic, 1> gaussianModel = gaussianPeakModel.Gaussian();
+    Eigen::ArrayX<double> gaussianModel = gaussianPeakModel.Gaussian();
     PeakModel lorentzianPeakModel = PeakModel(x, real_x1, real_fwhm1, real_intensity1, npix);
-    Eigen::Array<double, Eigen::Dynamic, 1> lorentzianModel = lorentzianPeakModel.Lorenzt();
+    Eigen::ArrayX<double> lorentzianModel = lorentzianPeakModel.Lorenzt();
 
     real_y = gaussianModel + lorentzianModel;
 
@@ -72,8 +71,8 @@ int main(int argc, char** argv) {
     int draws = 1000;
     double epsilon = 0.01;
 
-    Eigen::Array<double, Eigen::Dynamic, 1> prior_likelihoods(draws);
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> posteriors(draws , nparams);
+    Eigen::ArrayX<double> prior_likelihoods(draws);
+    Eigen::ArrayXX<double> posteriors(draws , nparams);
 
     /*   x0 fwhm0 int0 x1 fwhm1 int2
        [ 0    0    0   0    0    0 ]
@@ -98,8 +97,8 @@ int main(int argc, char** argv) {
     int max_steps = n_steps;
     int dimension = nparams;
 
-    Eigen::Array<double, Eigen::Dynamic, 1> acc_per_chain(draws);
-    Eigen::Array<double, Eigen::Dynamic, 1> scalings(draws);
+    Eigen::ArrayX<double> acc_per_chain(draws);
+    Eigen::ArrayX<double> scalings(draws);
 
     double factor = (2.38 * 2.38) / nparams;
     if (factor < 1){
@@ -115,17 +114,14 @@ int main(int argc, char** argv) {
     ' | Kezdeti populacio meghatarozasa         |'
     ' |_________________________________________|'
     '--------------------------------------------------------------------------------------------------------'*/
-
     for (int i = 0; i < normalDistribution.capacity(); ++i) {
-        auto tmp = normalDistribution[i].Sample(draws, rng);
-        for (int j = 0; j < draws; ++j) {
-            posteriors(j,i) = tmp[j];
-        }
+        Eigen::ArrayX<double> tmp = normalDistribution[i].Sample(draws, rng);
+        posteriors.col(i) = tmp;
         // histogram(tmp, 20);
     }
 
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> init_population = posteriors;
-    Eigen::Array<double, Eigen::Dynamic, 1> likelihoods(draws);
+    Eigen::ArrayXX<double> init_population = posteriors;
+    Eigen::ArrayX<double> likelihoods(draws);
 
     std::cout << "Starting population statistics: \n    ";
 
@@ -140,14 +136,14 @@ int main(int argc, char** argv) {
         }
 
         PeakModel gaussModel = PeakModel(x, init_population(i, 0), init_population(i, 1), init_population(i, 2), npix);
-        Eigen::Array<double, Eigen::Dynamic, 1> gauss = gaussModel.Gaussian();
+        Eigen::ArrayX<double> gauss = gaussModel.Gaussian();
         PeakModel lorentzModel = PeakModel(x, init_population(i, 3), init_population(i, 4), init_population(i, 5), npix);
-        Eigen::Array<double, Eigen::Dynamic, 1> lorentz = lorentzModel.Lorenzt();
+        Eigen::ArrayX<double> lorentz = lorentzModel.Lorenzt();
         y_sim = gauss + lorentz;
 
         //matplotlibcpp::plot(y_sim);
 
-        Eigen::Array<double, Eigen::Dynamic, 1> spectrumDiffs(npix);
+        Eigen::ArrayX<double> spectrumDiffs(npix);
         spectrumDiffs = (real_y - y_sim).cwiseAbs();
 
         double mean_abs_error = spectrumDiffs.mean();
@@ -175,7 +171,7 @@ int main(int argc, char** argv) {
 
         int rN = int(round(int(likelihoods.size()) * threshold));
 
-        Eigen::Array<double, Eigen::Dynamic, 1> ll_diffs(likelihoods.size());
+        Eigen::ArrayX<double> ll_diffs(likelihoods.size());
         double max = likelihoods.maxCoeff();
         ll_diffs = likelihoods - max;
 
@@ -185,8 +181,8 @@ int main(int argc, char** argv) {
 //    ' |_________________________________________|'
         #pragma region importance_weights        
         std::cout << "    Stage " << stage << " - Importance weights\n";
-        Eigen::Array<double, Eigen::Dynamic, 1> weights_un(ll_diffs.size());
-        Eigen::Array<double, Eigen::Dynamic, 1> weights(ll_diffs.size());
+        Eigen::ArrayX<double> weights_un(ll_diffs.size());
+        Eigen::ArrayX<double> weights(ll_diffs.size());
 
         while ((upBeta - lowBeta) > 1e-6 ){
             double sum_of_weights_un = 0;
@@ -237,7 +233,7 @@ int main(int argc, char** argv) {
         scalings = resampling(scalings, resamplingIndexes);
         acc_per_chain = resampling(acc_per_chain, resamplingIndexes);
 
-        Eigen::Array<double, Eigen::Dynamic, 1> tempered_logp(draws);
+        Eigen::ArrayX<double> tempered_logp(draws);
         tempered_logp = prior_likelihoods + likelihoods * beta;
 
         Eigen::MatrixXd centered = posteriors.rowwise() - posteriors.colwise().mean();
@@ -308,13 +304,13 @@ int main(int argc, char** argv) {
             double old_likelihood = likelihoods[draw];
             double old_prior = prior_likelihoods[draw];
             double old_tempered_logp = tempered_logp[draw];
-            Eigen::Array<double, Eigen::Dynamic, 1> q_old = posteriors.row(draw);
+            Eigen::ArrayX<double> q_old = posteriors.row(draw);
 
             for (int i = 0; i < n_steps; ++i) {
-                Eigen::Array<double, Eigen::Dynamic, 1> delta = deltas.row(i);
-                Eigen::Array<double, Eigen::Dynamic, 1> q_new = q_old + delta;
+                Eigen::ArrayX<double> delta = deltas.row(i);
+                Eigen::ArrayX<double> q_new = q_old + delta;
                 y_sim = staticPeakModel(x, q_new);
-                Eigen::Array<double, Eigen::Dynamic, 1> spectrumDiffs(npix);
+                Eigen::ArrayX<double> spectrumDiffs(npix);
 
                 spectrumDiffs = abs(real_y - y_sim);
 

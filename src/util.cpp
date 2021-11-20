@@ -12,7 +12,7 @@
 #include <random>
 #include <cstdlib>
 
-Eigen::Array<double, Eigen::Dynamic, 1> getDistribution(double x_mu, double x_sigma, size_t numberOfValues, pcg32& rng){
+Eigen::ArrayX<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues, pcg32& rng){
     std::normal_distribution<double> nd(x_mu, x_sigma);
     std::vector<double> result;
     result.reserve(numberOfValues);
@@ -21,7 +21,7 @@ Eigen::Array<double, Eigen::Dynamic, 1> getDistribution(double x_mu, double x_si
         result.push_back(nd(rng));
     }
 
-    Eigen::Array<double, Eigen::Dynamic, 1> res(result.capacity());
+    Eigen::ArrayX<double> res(result.capacity());
     for (int i = 0; i < result.capacity(); ++i) {
         res(i) = result[i];
     }
@@ -29,11 +29,11 @@ Eigen::Array<double, Eigen::Dynamic, 1> getDistribution(double x_mu, double x_si
     return res;
 }
 
-Eigen::Array<int, Eigen::Dynamic, 1>  randomWeightedIndices(int draws, const Eigen::Array<double, Eigen::Dynamic, 1>& weightsOut, pcg32& rng)
+Eigen::Array<int, Eigen::Dynamic, 1>  randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weightsOut, pcg32& rng)
 {
     int nweights = weightsOut.size();
     Eigen::Array<int, Eigen::Dynamic, 1> returnedIndices(draws);
-    Eigen::Array<double, Eigen::Dynamic, 1> cumulativeWeights(nweights);
+    Eigen::ArrayX<double> cumulativeWeights(nweights);
     std::uniform_real_distribution<double> uniformDistribution(0.0, 1.0);
 
     // calculate the cumulative weightsOut
@@ -58,8 +58,8 @@ Eigen::Array<int, Eigen::Dynamic, 1>  randomWeightedIndices(int draws, const Eig
     return returnedIndices;
 }
 
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(const Eigen::Array<double, Eigen::Dynamic, 1>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices){
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampledResult(vector);
+Eigen::ArrayXX<double> resampling(const Eigen::ArrayX<double>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices){
+    Eigen::ArrayXX<double> resampledResult(vector);
     for (int i = 0; i < vector.cols(); ++i) {
         resampledResult(i)= vector(indices(i));
     }
@@ -67,8 +67,8 @@ Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(const Eigen::Arr
     return resampledResult;
 }
 
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices){
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampledResult(vector);
+Eigen::ArrayXX<double> resampling(const Eigen::ArrayXX<double>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices){
+    Eigen::ArrayXX<double> resampledResult(vector);
     for (int i = 0; i < vector.cols(); ++i) {
         resampledResult(i)= vector(indices(i));
     }
@@ -76,9 +76,9 @@ Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> resampling(const Eigen::Arr
     return resampledResult;
 }
 
-Eigen::Array<double, Eigen::Dynamic, 1> staticPeakModel(const Eigen::Array<double, Eigen::Dynamic, 1>& x, const Eigen::Array<double, Eigen::Dynamic, 1>& params)
+Eigen::ArrayX<double> staticPeakModel(const Eigen::ArrayX<double>& x, const Eigen::ArrayX<double>& params)
 {
-    Eigen::Array<double, Eigen::Dynamic, 1> spectrum(x.size());
+    Eigen::ArrayX<double> spectrum(x.size());
 
     double sigma = std::abs(params(1)) / 2.35482;
     double c0 = params(2) / (sigma * 2.5066283);

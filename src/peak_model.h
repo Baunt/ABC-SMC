@@ -10,21 +10,21 @@
 
 class PeakModel {
 private:
-    Eigen::VectorXd p_x;
+    Eigen::ArrayX<double> p_x;
     double p_x0;
     double p_fwhm;
     double p_intensity;
     int p_npix;
 public:
-    Eigen::VectorXd Gaussian();
+    Eigen::ArrayX<double> Gaussian();
 
 //    std::vector<double> GaussianNonOptimized();
 
-    Eigen::VectorXd Lorenzt();
+    Eigen::ArrayX<double> Lorenzt();
 
 //    std::vector<double> LorenztNonOptimized();
 
-    PeakModel(Eigen::VectorXd x, double x0, double fwhm, double intensity, int npix)
+    PeakModel(Eigen::ArrayX<double> x, double x0, double fwhm, double intensity, int npix)
     {
         p_x = x;
         p_x0 = x0;
