@@ -6,6 +6,7 @@
 // #include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
 #include "probability_distribution.h"
 #include "../include/third-party-library/Eigen/src/Cholesky/LLT.h"
+#include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -123,7 +124,7 @@ int main(int argc, char** argv) {
     Eigen::VectorXd likelihoods(draws);
 
     std::cout << "Starting population statistics: \n    ";
-    populationstatistics(posteriors);
+    populationStatistics(posteriors);
     std::cout << "\n";
 
     for (int i = 0; i < draws; ++i) {
@@ -294,9 +295,9 @@ int main(int argc, char** argv) {
 //    ' |____________________________________________|'
         #pragma region MCMC
         std::cout << "    Stage " << stage << " - MCMC chains\n";
-        
-        
-        populationstatistics(posteriors);
+
+
+        populationStatistics(posteriors);
         double new_acc_rate = 0.0;
 
         for (int draw = 0; draw < draws; ++draw) {
@@ -326,7 +327,7 @@ int main(int argc, char** argv) {
             for (int i = 0; i < n_steps; ++i) {
                 Eigen::VectorXd delta = deltas.row(i);
                 Eigen::VectorXd q_new = q_old + delta;
-                y_sim = staticpeakmodel(x, q_new);
+                y_sim = staticPeakModel(x, q_new);
                 Eigen::VectorXd spectrumDiffs(npix);
                 for (int j = 0; j < real_y.size(); ++j) {
                     spectrumDiffs(j) = std::abs(real_y(j) - y_sim(j));
@@ -376,8 +377,8 @@ int main(int argc, char** argv) {
                 posteriors(draw, i) = q_old[i];
             }            
         }
-        
-        populationstatistics(posteriors);
+
+        populationStatistics(posteriors);
         acc_rate = acc_per_chain.mean();
 
         #pragma endregion MCMC

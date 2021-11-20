@@ -30,11 +30,11 @@ Eigen::MatrixXd resampling(Eigen::MatrixXd vector, Eigen::VectorXi indices);
 
 double getUniformRandomNumber();
 
-Eigen::VectorXd staticpeakmodel(Eigen::VectorXd x, Eigen::VectorXd params);
+Eigen::VectorXd staticPeakModel(Eigen::VectorXd x, Eigen::VectorXd params);
 
-void populationstatistics(Eigen::MatrixXd population);
+void populationStatistics(Eigen::MatrixXd population);
 
-void populationstatistics(std::vector<std::vector<double>> population);
+void populationStatistics(std::vector<std::vector<double>> population);
 
 //template<class T> void reorder(std::vector<T> &v, std::vector<size_t> const &order ){
 //    for ( int s = 1, d; s < order.capacity(); ++ s ) {

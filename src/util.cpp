@@ -2,22 +2,26 @@
 // Created by balint.galgoczi on 2021.08.10..
 //
 #define _USE_MATH_DEFINES
+
 #include <algorithm>
 #include <map>
 #include "util.h"
-#include <set>
+#include "../include/third-party-library/pcg-cpp/pcg_extras.hpp"
+#include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 #include <iomanip>
 #include <random>
 #include <cstdlib>
 
+pcg32 getRandomGenerator();
+
 Eigen::VectorXd getDistribution(double x_mu, double x_sigma, size_t numberOfValues){
-    std::mt19937 gen((std::random_device())());
+    pcg32 rng = getRandomGenerator();
     std::normal_distribution<double> nd(x_mu, x_sigma);
     std::vector<double> result;
     result.reserve(numberOfValues);
     while(numberOfValues-- > 0)
     {
-        result.push_back(nd(gen));
+        result.push_back(nd(rng));
     }
 
     Eigen::VectorXd res(result.capacity());
@@ -26,6 +30,13 @@ Eigen::VectorXd getDistribution(double x_mu, double x_sigma, size_t numberOfValu
     }
 
     return res;
+}
+
+pcg32 getRandomGenerator() {
+   pcg_extras::seed_seq_from<std::random_device> seed_source;
+   pcg32 rng(seed_source);
+
+   return rng;
 }
 
 std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>> &m)
@@ -97,8 +108,7 @@ Eigen::VectorXi randomWeightedIndices(int draws, Eigen::VectorXd weights)
     Eigen::VectorXi returnedindices(draws);
     Eigen::VectorXd cumulativeWeights(nweights);
 
-    std::random_device randomDevice;
-    std::mt19937 randomGen(randomDevice());
+    pcg32 rng = getRandomGenerator();
     std::uniform_real_distribution<double> uniformdistribution(0.0, 1.0);
 
     // calculate the cumulative weights
@@ -111,7 +121,7 @@ Eigen::VectorXi randomWeightedIndices(int draws, Eigen::VectorXd weights)
 
     // for each random draw
     for (int i = 0; i < draws; ++i) {
-        double r = uniformdistribution(randomGen);
+        double r = uniformdistribution(rng);
         // this is not optimal, use binary search instead
         for (int k = 0; k < nweights; ++k) {
             if (r < cumulativeWeights(k)) {
@@ -124,10 +134,9 @@ Eigen::VectorXi randomWeightedIndices(int draws, Eigen::VectorXd weights)
 }
 
 double getUniformRandomNumber(){
-    std::random_device randomDevice;
-    std::mt19937 randomGen(randomDevice());
+    pcg32 rng = getRandomGenerator();
     std::uniform_real_distribution<double> uniformdistribution(0.0, 1.0);
-    return uniformdistribution(randomGen);
+    return uniformdistribution(rng);
 }
 
 void histogram(std::vector<double> data, int nbins ){
@@ -222,7 +231,7 @@ Eigen::MatrixXd resampling(Eigen::MatrixXd vector, Eigen::VectorXi indices){
 }
 
 
-Eigen::VectorXd staticpeakmodel(Eigen::VectorXd x, Eigen::VectorXd params)
+Eigen::VectorXd staticPeakModel(Eigen::VectorXd x, Eigen::VectorXd params)
 {
     Eigen::VectorXd spectrum(x.size());
 
@@ -243,7 +252,7 @@ Eigen::VectorXd staticpeakmodel(Eigen::VectorXd x, Eigen::VectorXd params)
 }
 
 
-void populationstatistics(Eigen::MatrixXd population)
+void populationStatistics(Eigen::MatrixXd population)
 {
     Eigen::VectorXd means = population.colwise().mean();    
     Eigen::MatrixXd centered = population.rowwise() - means.adjoint();
@@ -258,7 +267,7 @@ void populationstatistics(Eigen::MatrixXd population)
 }
 
 
-void populationstatistics(std::vector<std::vector<double>> population)
+void populationStatistics(std::vector<std::vector<double>> population)
 {
     int draws = population.capacity();
     int nparams = population[0].capacity();
