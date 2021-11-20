@@ -13,7 +13,7 @@ add_executable(ABC_SMC_Algorithm src/main.cpp src/peak_model.h src/peak_model.cp
 target_link_libraries(ABC_SMC_Algorithm PRIVATE matplotlib_cpp)
 set_target_properties(ABC_SMC_Algorithm PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-set(EIGEN_DIR "./eigen-3.3.9")
+set(EIGEN_DIR "./eigen-3.4.0")
 find_path(EIGEN_DIR NAMES signature_of_eigen3_matrix_library
         PATHS
         /home/xxxx/Desktop/eigen-3.3.7
