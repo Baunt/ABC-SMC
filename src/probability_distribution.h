@@ -43,7 +43,7 @@ public:
     }
 
     double LogP(double value);
-    Eigen::ArrayX<double> Sample(int draws, pcg32& rng);
+    Eigen::ArrayX<double> Sample(int draws);
 };
 
 

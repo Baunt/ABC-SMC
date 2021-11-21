@@ -32,11 +32,11 @@ Eigen::ArrayX<double> getDistribution(double x_mu, double x_sigma, size_t number
     return res;
 }
 
-Eigen::Array<int, Eigen::Dynamic, 1>  randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weightsOut)
+Eigen::ArrayX<int> randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weightsOut)
 {
     pcg32 rng = PcgRandomGenerator::GetInstance()->value();
     int nweights = weightsOut.size();
-    Eigen::Array<int, Eigen::Dynamic, 1> returnedIndices(draws);
+    Eigen::ArrayX<int> returnedIndices(draws);
     Eigen::ArrayX<double> cumulativeWeights(nweights);
     std::uniform_real_distribution<double> uniformDistribution(0.0, 1.0);
 

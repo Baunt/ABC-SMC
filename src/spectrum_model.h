@@ -14,12 +14,13 @@
 
 class SpectrumModel {
 private:
-    std::list<NormalDistribution> normalDistribution;
     std::list<PeakModel> peakModels;
-    Eigen::ArrayX<double> x;
-    int npix;
 public:
+    int npix;
+    std::vector<NormalDistribution> NormalDistributions;
     SpectrumModel * calculate(std::map<std::string, Eigen::ArrayX<double>> parameters, bool withNoise);
+    Eigen::ArrayX<double> spectrum;
+    Eigen::ArrayX<double> x;
 
     SpectrumModel(int npix){
         this->npix = npix;

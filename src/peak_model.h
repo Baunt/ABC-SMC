@@ -6,6 +6,7 @@
 #define ABC_SMC_ALGORITHM_PEAK_MODEL_H
 
 #include <vector>
+#include <iostream>
 #include "../include/third-party-library/Eigen/Core"
 
 class PeakModel {
@@ -26,7 +27,7 @@ public:
 
 //    std::vector<double> LorenztNonOptimized();
 
-    PeakModel(Eigen::ArrayX<double> x, double x0, double fwhm, double intensity, int npix, std::string type)
+    PeakModel(const Eigen::ArrayX<double>& x, double x0, double fwhm, double intensity, int npix, std::string type)
     {
         Type = type;
         p_x = x;
