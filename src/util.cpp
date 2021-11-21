@@ -8,11 +8,14 @@
 #include "util.h"
 #include "../include/third-party-library/pcg-cpp/pcg_extras.hpp"
 #include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
+#include "pcg_random_generator.h"
 #include <iomanip>
 #include <random>
 #include <cstdlib>
 
-Eigen::ArrayX<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues, pcg32& rng){
+Eigen::ArrayX<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues){
+    pcg32 rng = PcgRandomGenerator::GetInstance()->value();
+
     std::normal_distribution<double> nd(x_mu, x_sigma);
     std::vector<double> result;
     result.reserve(numberOfValues);
@@ -29,8 +32,9 @@ Eigen::ArrayX<double> getDistribution(double x_mu, double x_sigma, size_t number
     return res;
 }
 
-Eigen::Array<int, Eigen::Dynamic, 1>  randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weightsOut, pcg32& rng)
+Eigen::Array<int, Eigen::Dynamic, 1>  randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weightsOut)
 {
+    pcg32 rng = PcgRandomGenerator::GetInstance()->value();
     int nweights = weightsOut.size();
     Eigen::Array<int, Eigen::Dynamic, 1> returnedIndices(draws);
     Eigen::ArrayX<double> cumulativeWeights(nweights);

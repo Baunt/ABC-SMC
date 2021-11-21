@@ -12,9 +12,9 @@
 #include "../include/third-party-library/Eigen/Core"
 #include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 
-Eigen::ArrayX<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues, pcg32& rng);
+Eigen::ArrayX<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues);
 
-Eigen::Array<int, Eigen::Dynamic, 1> randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weights, pcg32& rng);
+Eigen::Array<int, Eigen::Dynamic, 1> randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weights);
 
 Eigen::ArrayXX<double> resampling(const Eigen::ArrayX<double>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices);
 
