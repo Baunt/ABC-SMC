@@ -93,6 +93,8 @@ Eigen::ArrayX<double> PeakModel::Gaussian()
     {
         spectrum(i) = c0 * std::exp(-c1 * (p_x[i] - p_x0) * (p_x[i] - p_x0));
     }
+
+    Type = "Gaussian";
     return spectrum;
 }
 
@@ -118,5 +120,6 @@ Eigen::ArrayX<double> PeakModel::Lorenzt() {
         spectrum(i) = p_intensity / (gamma * M_PI * (1.0 + ((p_x[i] - p_x0) * inverseGamma) * ((p_x[i] - p_x0) * inverseGamma)));
     }
 
+    Type = "Lorentzian";
     return spectrum;
 }

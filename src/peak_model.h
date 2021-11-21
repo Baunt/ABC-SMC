@@ -16,6 +16,8 @@ private:
     double p_intensity;
     int p_npix;
 public:
+    std::string Type;
+
     Eigen::ArrayX<double> Gaussian();
 
 //    std::vector<double> GaussianNonOptimized();
@@ -24,8 +26,9 @@ public:
 
 //    std::vector<double> LorenztNonOptimized();
 
-    PeakModel(Eigen::ArrayX<double> x, double x0, double fwhm, double intensity, int npix)
+    PeakModel(Eigen::ArrayX<double> x, double x0, double fwhm, double intensity, int npix, std::string type)
     {
+        Type = type;
         p_x = x;
         p_x0 = x0;
         p_fwhm = fwhm;
