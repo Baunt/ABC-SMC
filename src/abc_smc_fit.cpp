@@ -13,6 +13,101 @@
 
 bool DEBUG;
 
+void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int nparams,
+                   Eigen::ArrayXX<double>& posteriors,
+                   Eigen::ArrayX<double>& likelihoods,
+                   Eigen::ArrayX<double>& tempered_logp,
+                   Eigen::ArrayX<double>& acc_per_chain,
+                   Eigen::ArrayX<double>& scalings,
+                   Eigen::LLT<Eigen::MatrixXd>& llt,
+                   Eigen::ArrayX<double>& prior_likelihoods,
+                   SpectrumModel simulatedSpectrumModel,
+                   SpectrumModel spectrumModel){
+    for (int draw = 0; draw < draws; ++draw) {
+        if (DEBUG)
+        {
+            std::cout << "  Sample " << draw << "\n";
+            std::cout << posteriors(draw, 0) << " " << posteriors(draw, 1) << " " << posteriors(draw, 2) << " " << posteriors(draw, 3) << " " << posteriors(draw, 4) << " " << posteriors(draw, 5) << "\n";
+            std::cout << "    err        pl            ll          beta     logp_0    logp_1          d_logp         r\n";
+        }
+
+        //TODO melyik legyen?
+        //Eigen::MatrixXd randomsForDeltas = Eigen::MatrixXd::Random(n_steps, 6);
+        pcg32 rng = PcgRandomGenerator::GetInstance()->value();
+        std::normal_distribution<double> std_dist(0.0, 1.0); // normal distribution with mu=0, sigma=1
+        std::uniform_real_distribution<double> uni_dist(0.0, 1.0); // uniform ditribution between: 0 <= r < 1
+        auto rand_fn = [&](){return std_dist(rng);};// lambda that generates random numbers
+        Eigen::MatrixXd random_matrix = Eigen::MatrixXd::NullaryExpr(n_steps, 6, rand_fn);// matrix expression
+
+        Eigen::MatrixXd randomsForDeltas = random_matrix;// saving the elements to a matrix
+        Eigen::MatrixXd deltas = randomsForDeltas * llt.matrixLLT();
+        deltas *= scalings[draw];
+
+        int accepted = 0;
+
+        double old_likelihood = likelihoods[draw];
+        double old_prior = prior_likelihoods[draw];
+        double old_tempered_logp = tempered_logp[draw];
+        Eigen::ArrayX<double> q_old = posteriors.row(draw);
+
+        for (int i = 0; i < n_steps; ++i) {
+            Eigen::ArrayX<double> delta = deltas.row(i);
+            Eigen::ArrayX<double> q_new = q_old + delta;
+            simulatedSpectrumModel.spectrum = staticPeakModel(spectrumModel.x, q_new);
+            Eigen::ArrayX<double> spectrumDiffs(spectrumModel.npix);
+
+            spectrumDiffs = abs(spectrumModel.spectrum - simulatedSpectrumModel.spectrum);
+
+            double pl = 0.0;
+            //TODO
+            for (int dist = 0; dist < spectrumModel.NormalDistributions.capacity(); ++dist) {
+                pl += spectrumModel.NormalDistributions[dist].LogP(q_new[dist]);
+            }
+            double mean_abs_error = spectrumDiffs.mean();
+            double ll = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) + log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
+            double new_tempered_logp = pl + ll * beta;
+            double delta_tempered_logp = new_tempered_logp - tempered_logp[draw];
+
+            double r = log(uni_dist(rng));
+            // std::cout << r << "  " << delta_tempered_logp << "\n";
+            if (r < delta_tempered_logp){
+                q_old = q_new;
+                accepted += 1;
+                old_prior = pl;
+                old_likelihood = ll;
+                old_tempered_logp = new_tempered_logp;
+            }
+
+            if (DEBUG){
+                char sacc = '-';
+                std::cout << std::setw(8) << std::fixed << std::setprecision(3) << mean_abs_error << " | ";
+                std::cout << std::setw(8) << std::fixed << std::setprecision(3) << pl << " + ";
+                std::cout << std::setw(12) << std::fixed << std::setprecision(2) << ll << " * ";
+                std::cout << std::setw(8) << std::fixed << std::setprecision(6) << beta << " = ";
+                std::cout << std::setw(8) << std::fixed << std::setprecision(3) << new_tempered_logp << " - ";
+                std::cout << std::setw(8) << std::fixed << std::setprecision(3) << tempered_logp[draw];
+                std::cout << std::setw(10) << std::fixed << std::setprecision(3) << " -> "  << delta_tempered_logp << " ?? ";
+                std::cout << std::setw(8) << std::fixed << std::setprecision(3) << r << " ";
+                if (r < delta_tempered_logp)
+                    sacc = '+';
+                std::cout << sacc << "\n";
+            }
+
+        }
+        prior_likelihoods(draw) = old_prior;
+        likelihoods(draw) = old_likelihood;
+        tempered_logp(draw) = old_tempered_logp;
+        acc_per_chain(draw) = double(accepted) / double(n_steps);
+        posteriors.row(draw) = q_old;
+
+        for (int i = 0; i < nparams; ++i)
+        {
+            posteriors(draw, i) = q_old[i];
+        }
+    }
+
+}
+
 void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
 
     //abc-smc fitting
@@ -100,8 +195,6 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
         likelihoods(i) = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) + log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
     }
 
-    std::normal_distribution<double> std_dist(0.0, 1.0); // normal distribution with mu=0, sigma=1
-    std::uniform_real_distribution<double> uni_dist(0.0, 1.0); // uniform ditribution between: 0 <= r < 1
 
     while (beta < 1){
         std::cout << "Stage: " << std::setw(3) << stage << "  ";
@@ -225,89 +318,21 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
 
         Eigen::MatrixXd copyPosteriorsInMC = posteriors;
         populationStatistics(copyPosteriorsInMC);
-        double new_acc_rate = 0.0;
 
-        for (int draw = 0; draw < draws; ++draw) {
-            if (DEBUG)
-            {
-                std::cout << "  Sample " << draw << "\n";
-                std::cout << posteriors(draw, 0) << " "<< posteriors(draw, 1) << " "<< posteriors(draw, 2) << " "<< posteriors(draw, 3) << " "<< posteriors(draw, 4) << " "<< posteriors(draw, 5) <<"\n";
-                std::cout << "    err        pl            ll          beta     logp_0    logp_1          d_logp         r\n";
-            }
-
-            //TODO melyik legyen?
-            //Eigen::MatrixXd randomsForDeltas = Eigen::MatrixXd::Random(n_steps, 6);
-            pcg32 rng = PcgRandomGenerator::GetInstance()->value();
-            auto rand_fn = [&](){return std_dist(rng);};// lambda that generates random numbers
-            Eigen::MatrixXd random_matrix = Eigen::MatrixXd::NullaryExpr(n_steps, 6, rand_fn);// matrix expression
-
-            Eigen::MatrixXd randomsForDeltas = random_matrix;// saving the elements to a matrix
-            Eigen::MatrixXd deltas = randomsForDeltas * llt.matrixLLT();
-            deltas *= scalings[draw];
-
-
-            int accepted = 0;
-
-            double old_likelihood = likelihoods[draw];
-            double old_prior = prior_likelihoods[draw];
-            double old_tempered_logp = tempered_logp[draw];
-            Eigen::ArrayX<double> q_old = posteriors.row(draw);
-
-            for (int i = 0; i < n_steps; ++i) {
-                Eigen::ArrayX<double> delta = deltas.row(i);
-                Eigen::ArrayX<double> q_new = q_old + delta;
-                simulatedSpectrumModel.spectrum = staticPeakModel(spectrumModel.x, q_new);
-                Eigen::ArrayX<double> spectrumDiffs(spectrumModel.npix);
-
-                spectrumDiffs = abs(spectrumModel.spectrum - simulatedSpectrumModel.spectrum);
-
-                double pl = 0.0;
-                //TODO
-                for (int dist = 0; dist < normalDistribution.capacity(); ++dist) {
-                    pl += normalDistribution[dist].LogP(q_new[dist]);
-                }
-                double mean_abs_error = spectrumDiffs.mean();
-                double ll = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) + log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
-                double new_tempered_logp = pl + ll * beta;
-                double delta_tempered_logp = new_tempered_logp - tempered_logp[draw];
-
-                double r = log(uni_dist(rng));
-                // std::cout << r << "  " << delta_tempered_logp << "\n";
-                if (r < delta_tempered_logp){
-                    q_old = q_new;
-                    accepted += 1;
-                    old_prior = pl;
-                    old_likelihood = ll;
-                    old_tempered_logp = new_tempered_logp;
-                }
-
-                if (DEBUG){
-                    char sacc = '-';
-                    std::cout << std::setw(8) << std::fixed << std::setprecision(3) << mean_abs_error << " | ";
-                    std::cout << std::setw(8) << std::fixed << std::setprecision(3) << pl << " + ";
-                    std::cout << std::setw(12) << std::fixed << std::setprecision(2) << ll << " * ";
-                    std::cout << std::setw(8) << std::fixed << std::setprecision(6) << beta << " = ";
-                    std::cout << std::setw(8) << std::fixed << std::setprecision(3) << new_tempered_logp << " - ";
-                    std::cout << std::setw(8) << std::fixed << std::setprecision(3) << tempered_logp[draw];
-                    std::cout << std::setw(10) << std::fixed << std::setprecision(3) << " -> "  << delta_tempered_logp << " ?? ";
-                    std::cout << std::setw(8) << std::fixed << std::setprecision(3) << r << " ";
-                    if (r < delta_tempered_logp)
-                        sacc = '+';
-                    std::cout << sacc << "\n";
-                }
-
-            }
-            prior_likelihoods(draw) = old_prior;
-            likelihoods(draw) = old_likelihood;
-            tempered_logp(draw) = old_tempered_logp;
-            acc_per_chain(draw) = double(accepted) / double(n_steps);
-            posteriors.row(draw) = q_old;
-
-            for (int i = 0; i < nparams; ++i)
-            {
-                posteriors(draw, i) = q_old[i];
-            }
-        }
+        runMcMcChains(draws,
+                      n_steps,
+                      epsilon,
+                      beta,
+                      nparams,
+                      posteriors,
+                      likelihoods,
+                      tempered_logp,
+                      acc_per_chain,
+                      scalings,
+                      llt,
+                      prior_likelihoods,
+                      simulatedSpectrumModel,
+                      spectrumModel);
 
         Eigen::MatrixXd copyPosteriorsInLoop = posteriors;
         populationStatistics(copyPosteriorsInLoop);
