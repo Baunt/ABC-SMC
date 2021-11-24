@@ -82,6 +82,9 @@ std::vector<double> divideVectorFromValue(double value, std::vector<double> vect
 //    return spectrum;
 //}
 
+
+// (!) szerintem ezek a fuggvenyek mehetnenek a spectrum modell-be
+
 Eigen::ArrayX<double> PeakModel::Gaussian()
 {
     Eigen::ArrayX<double> spectrum(p_npix);
@@ -89,10 +92,7 @@ Eigen::ArrayX<double> PeakModel::Gaussian()
     double c0 = p_intensity / (sigma * 2.5066283);
     double c1 = 0.5 / (sigma * sigma);
 
-    for (int i = 0; i < p_npix; ++i)
-    {
-        spectrum(i) = c0 * std::exp(-c1 * (p_x[i] - p_x0) * (p_x[i] - p_x0));
-    }
+    spectrum = c0 * exp(-c1 * (p_x - p_x0) * (p_x - p_x0));
 
     return spectrum;
 }
@@ -115,9 +115,8 @@ Eigen::ArrayX<double> PeakModel::Lorenzt() {
     Eigen::ArrayX<double> spectrum(p_npix);
     double gamma = std::abs(p_fwhm) / 2;
     double inverseGamma = 1.0 / gamma;
-    for (int i = 0; i < p_npix; ++i) {
-        spectrum(i) = p_intensity / (gamma * M_PI * (1.0 + ((p_x[i] - p_x0) * inverseGamma) * ((p_x[i] - p_x0) * inverseGamma)));
-    }
+
+    spectrum = p_intensity / (gamma * M_PI * (1.0 + ((p_x - p_x0) * inverseGamma) * ((p_x - p_x0) * inverseGamma)));
 
     return spectrum;
 }

@@ -9,6 +9,8 @@
 #include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 
 
+// manualisan rogziteni a seedet teszteleshez
+
 class PcgRandomGenerator
 {
 protected:

@@ -21,7 +21,7 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
                    Eigen::ArrayX<double>& scalings,
                    Eigen::LLT<Eigen::MatrixXd>& llt,
                    Eigen::ArrayX<double>& prior_likelihoods,
-                   SpectrumModel simulatedSpectrumModel,
+                   const Eigen::ArrayX<double>& spectrum,
                    SpectrumModel spectrumModel){
     for (int draw = 0; draw < draws; ++draw) {
         if (DEBUG)
@@ -49,19 +49,20 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
         double old_prior = prior_likelihoods[draw];
         double old_tempered_logp = tempered_logp[draw];
         Eigen::ArrayX<double> q_old = posteriors.row(draw);
+        Eigen::ArrayX<double> simulatedSpectrum;
 
         for (int i = 0; i < n_steps; ++i) {
             Eigen::ArrayX<double> delta = deltas.row(i);
             Eigen::ArrayX<double> q_new = q_old + delta;
-            simulatedSpectrumModel.spectrum = staticPeakModel(spectrumModel.x, q_new);
+            simulatedSpectrum = staticPeakModel(spectrumModel.x, q_new);
             Eigen::ArrayX<double> spectrumDiffs(spectrumModel.npix);
 
-            spectrumDiffs = abs(spectrumModel.spectrum - simulatedSpectrumModel.spectrum);
+            spectrumDiffs = abs(spectrum - simulatedSpectrum);
 
             double pl = 0.0;
             //TODO
-            for (int dist = 0; dist < spectrumModel.NormalDistributions.capacity(); ++dist) {
-                pl += spectrumModel.NormalDistributions[dist].LogP(q_new[dist]);
+            for (int dist = 0; dist < spectrumModel.InitialGuess.capacity(); ++dist) {
+                pl += spectrumModel.InitialGuess[dist].LogP(q_new[dist]);
             }
             double mean_abs_error = spectrumDiffs.mean();
             double ll = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) + log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
@@ -108,8 +109,7 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
 
 }
 
-void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
-
+void AbcSmcFit::Fit(SpectrumModel spectrumModel, const Eigen::ArrayX<double>& spectrum) {
     //abc-smc fitting
     int nparams = 6;
     int draws = 1000;
@@ -130,7 +130,6 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
     Eigen::ArrayX<double> acc_per_chain(draws);
     Eigen::ArrayX<double> scalings(draws);
     Eigen::ArrayX<double> prior_likelihoods(draws);
-    Eigen::ArrayXX<double> posteriors(draws , nparams);
     /*   x0 fwhm0 int0 x1 fwhm1 int2
        [ 0    0    0   0    0    0 ]
        [ 0    0    0   0    0    0 ]
@@ -143,28 +142,17 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
        row = drwas
      * */
     SpectrumModel simulatedSpectrumModel = SpectrumModel(spectrumModel.npix);
-    std::vector<NormalDistribution> normalDistribution = spectrumModel.NormalDistributions;
+    Eigen::ArrayXX<double> posteriors = spectrumModel.GenerateInitialPopulation(draws, nparams);
+    Eigen::ArrayXX<double> init_population = posteriors;
+    Eigen::ArrayX<double> likelihoods(draws);
+
+    std::cout << "Starting population statistics: \n    ";
 
     if (factor < 1){
         scalings = factor;
     } else{
         scalings = 1;
     }
-
-    /*' ___________________________________________'
-    ' |                                         |'
-    ' | Kezdeti populacio meghatarozasa         |'
-    ' |_________________________________________|'
-    '--------------------------------------------------------------------------------------------------------'*/
-    for (int i = 0; i < normalDistribution.size(); ++i) {
-        Eigen::ArrayX<double> tmp = normalDistribution[i].Sample(draws);
-        posteriors.col(i) = tmp;
-    }
-
-    Eigen::ArrayXX<double> init_population = posteriors;
-    Eigen::ArrayX<double> likelihoods(draws);
-
-    std::cout << "Starting population statistics: \n    ";
 
     Eigen::MatrixXd copyPosteriors = posteriors;
     populationStatistics(copyPosteriors);
@@ -173,7 +161,7 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
     for (int i = 0; i < draws; ++i) {
         //TODO
         for (int j = 0; j < posteriors.row(i).size(); ++j) {
-            prior_likelihoods(i) += normalDistribution[j].LogP(init_population(i, j));
+            prior_likelihoods(i) += spectrumModel.InitialGuess[j].LogP(init_population(i, j));
         }
 
         std::map<std::string, Eigen::ArrayX<double>> simSpectrum;
@@ -185,10 +173,10 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
 
         simSpectrum.insert(std::pair<std::string, Eigen::ArrayX<double>>("Gaussian", peak1FromInitPopulation));
         simSpectrum.insert(std::pair<std::string, Eigen::ArrayX<double>>("Lorentzian", peak2FromInitPopulation));
-        simulatedSpectrumModel.calculate(simSpectrum, false);
+        Eigen::ArrayX<double> simulatedSpectrum = simulatedSpectrumModel.calculate(simSpectrum, false);
 
         Eigen::ArrayX<double> spectrumDiffs(spectrumModel.npix);
-        spectrumDiffs = (spectrumModel.spectrum - simulatedSpectrumModel.spectrum).cwiseAbs();
+        spectrumDiffs = (spectrum - simulatedSpectrum).cwiseAbs();
 
         double mean_abs_error = spectrumDiffs.mean();
 
@@ -331,7 +319,7 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
                       scalings,
                       llt,
                       prior_likelihoods,
-                      simulatedSpectrumModel,
+                      spectrum,
                       spectrumModel);
 
         Eigen::MatrixXd copyPosteriorsInLoop = posteriors;

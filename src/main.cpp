@@ -26,14 +26,11 @@ int main(int argc, char** argv) {
     realSpectrum.insert(std::pair<std::string, Eigen::ArrayX<double>>("Gaussian", peak1));
     realSpectrum.insert(std::pair<std::string, Eigen::ArrayX<double>>("Lorentzian", peak2));
 
-    Eigen::ArrayX<double> real_y(npix);
-    Eigen::ArrayX<double> y_sim(npix);
-
     //simulated spectrum
     SpectrumModel simulatedSpectrumModel = SpectrumModel(npix);
-    simulatedSpectrumModel.calculate(realSpectrum, true);
+    Eigen::ArrayX<double> simSpectrum = simulatedSpectrumModel.calculate(realSpectrum, true);
 
-    AbcSmcFit().Fit(simulatedSpectrumModel);
+    AbcSmcFit().Fit(simulatedSpectrumModel, simSpectrum);
 
     return 0;
 }

@@ -14,14 +14,14 @@
 
 class SpectrumModel {
 private:
-    std::list<PeakModel> peakModels;
 public:
     int npix;
-    std::vector<NormalDistribution> NormalDistributions;
-    SpectrumModel * calculate(std::map<std::string, Eigen::ArrayX<double>> parameters, bool withNoise);
-    Eigen::ArrayX<double> spectrum;
+    std::vector<NormalDistribution> InitialGuess;
+    Eigen::ArrayXX<double> GenerateInitialPopulation(int nsamples, int nparams);
+    Eigen::ArrayX<double> calculate(std::map<std::string, Eigen::ArrayX<double>> parameters, bool withNoise);
     Eigen::ArrayX<double> x;
 
+    // argumentumban megadott spektrummal initelni SpectrumModel(Eigen::ArrayX<double> energy, Eigen::ArrayX<double> intensity)
     SpectrumModel(int npix){
         this->npix = npix;
         this->x = Eigen::VectorXd::LinSpaced(npix, 0, 1);
