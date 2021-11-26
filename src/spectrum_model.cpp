@@ -3,10 +3,12 @@
 //
 #define _USE_MATH_DEFINES
 #include "spectrum_model.h"
+
+#include <utility>
 #include "pcg_random_generator.h"
 #include "util.h"
 
-Eigen::ArrayX<double> lorenzt(const Eigen::ArrayX<double>& x, double x0, double fwhm, double intensity, int npix) {
+Eigen::ArrayX<double> lorentz(const Eigen::ArrayX<double>& x, double x0, double fwhm, double intensity, int npix) {
     Eigen::ArrayX<double> spectrum(npix);
     double gamma = std::abs(fwhm) / 2;
     double inverseGamma = 1.0 / gamma;
@@ -27,21 +29,32 @@ Eigen::ArrayX<double> gaussian(const Eigen::ArrayX<double>& x, double x0, double
 
     return spectrum;
 }
-Eigen::ArrayX<double> SpectrumModel::calculate(std::map<std::string, Eigen::ArrayX<double>> parameters, bool withNoise) {
-    std::map<std::string, Eigen::ArrayX<double>>::iterator itr;
+
+Eigen::ArrayX<double> SpectrumModel::Calculate(Eigen::ArrayX<double> parameters, bool withNoise) {
     Eigen::ArrayX<double> noise = getDistribution(0.0, 1.0, npix);
     Eigen::ArrayX<double> internalSpectrum(npix);
     internalSpectrum.setZero();
-    
-    for (itr = parameters.begin(); itr != parameters.end(); ++itr) {
-        if (itr->first == "Gaussian"){
-            internalSpectrum += gaussian(x, itr->second[0], itr->second[1], itr->second[2], npix);
+
+    for (int i = 0; i < peaks.size(); ++i) {
+        PeakType actualPeak = peaks[i];
+        switch (actualPeak) {
+            case Gauss:
+            {
+                Eigen::ArrayX<double> gaussParametersSegment = parameters.segment(i * 3, 3);
+                internalSpectrum += gaussian(energy, gaussParametersSegment[0], gaussParametersSegment[1], gaussParametersSegment[2], npix);
+                break;
+            }
+            case Lorentz:
+            {
+                Eigen::ArrayX<double> lorentzParametersSegment = parameters.segment(i * 3, 3);
+                internalSpectrum += lorentz(energy, lorentzParametersSegment[0], lorentzParametersSegment[1],
+                                            lorentzParametersSegment[2], npix);
+                break;
+            }
+            default:
+                internalSpectrum.setZero();
+                break;
         }
-        else if(itr->first == "Lorentzian"){
-            internalSpectrum += lorenzt(x, itr->second[0], itr->second[1], itr->second[2], npix);
-        }
-        else
-            internalSpectrum.setZero();
     }
 
     if (withNoise){
@@ -77,4 +90,14 @@ Eigen::ArrayXX<double> SpectrumModel::GenerateInitialPopulation(int nsamples, in
     return posteriors;
 }
 
+void SpectrumModel::SetPeakList(std::vector<PeakType>& peakList) {
+    this->peaks = peakList;
+}
+
+double SpectrumModel::ErrorCalculation(Eigen::ArrayX<double> diffSpectrum) {
+    Eigen::ArrayX<double> spectrumDiffs(npix);
+    spectrumDiffs = (intensity - diffSpectrum).cwiseAbs();
+
+    return spectrumDiffs.mean();
+}
 

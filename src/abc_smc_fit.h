@@ -11,7 +11,7 @@
 
 class AbcSmcFit {
 public:
-    void Fit(SpectrumModel spectrumModel, const Eigen::ArrayX<double>& spectrum);
+    void Fit(SpectrumModel spectrumModel);
 };
 
 

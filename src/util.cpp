@@ -40,7 +40,7 @@ Eigen::ArrayX<int> randomWeightedIndices(int draws, const Eigen::ArrayX<double>&
     Eigen::ArrayX<double> cumulativeWeights(nweights);
     std::uniform_real_distribution<double> uniformDistribution(0.0, 1.0);
 
-    // calculate the cumulative weightsOut
+    // Calculate the cumulative weightsOut
     double s = weightsOut(0);
     cumulativeWeights(0) = s;
     for (int i = 1; i < nweights; ++i) {
@@ -98,6 +98,49 @@ Eigen::ArrayX<double> staticPeakModel(const Eigen::ArrayX<double>& x, const Eige
     }
     return spectrum;
 }
+
+Eigen::ArrayX<double> getSimulatedSpectrum(const Eigen::ArrayX<double>& parameters, std::vector<PeakType> peaks, int npix, bool withNoise){
+    Eigen::ArrayX<double> energy = Eigen::VectorXd::LinSpaced(npix, 0, 1);
+    Eigen::ArrayX<double> noise = getDistribution(0.0, 1.0, npix);
+    Eigen::ArrayX<double> internalSpectrum(npix);
+    internalSpectrum.setZero();
+
+    for (int i = 0; i < peaks.size(); ++i) {
+        PeakType actualPeak = peaks[i];
+        switch (actualPeak) {
+            case Gauss:
+            {
+                Eigen::ArrayX<double> gaussParametersSegment = parameters.segment(i * 3, 3);
+                Eigen::ArrayX<double> spectrum(npix);
+                double sigma = std::abs(gaussParametersSegment[1]) / 2.35482;
+                double c0 = gaussParametersSegment[2] / (sigma * 2.5066283);
+                double c1 = 0.5 / (sigma * sigma);
+                spectrum = c0 * exp(-c1 * (energy - gaussParametersSegment[0]) * (energy - gaussParametersSegment[0]));
+                internalSpectrum += spectrum;
+                break;
+            }
+            case Lorentz:
+            {
+                Eigen::ArrayX<double> lorentzParametersSegment = parameters.segment(i * 3, 3);
+                Eigen::ArrayX<double> spectrum(npix);
+                double gamma = std::abs(lorentzParametersSegment[1]) / 2;
+                double inverseGamma = 1.0 / gamma;
+                spectrum = lorentzParametersSegment[2] / (gamma * M_PI * (1.0 + ((energy - lorentzParametersSegment[0]) * inverseGamma) * ((energy - lorentzParametersSegment[0]) * inverseGamma)));
+                break;
+            }
+            default:
+                internalSpectrum.setZero();
+                break;
+        }
+    }
+
+    if (withNoise){
+        internalSpectrum += noise;
+    }
+
+    return internalSpectrum;
+}
+
 
 //TODO
 void populationStatistics(const Eigen::MatrixXd& population)

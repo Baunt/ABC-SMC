@@ -67,24 +67,6 @@ std::vector<double> divideVectorFromValue(double value, std::vector<double> vect
 }
 
 
-//std::vector<double> PeakModel::GaussianNonOptimized() {
-//
-//    double sigma = abs(p_fwhm) / 2.35482;
-//    double c0 = 1 / (sigma * pow(2 * M_PI, 0.5));
-//    double c1 = 0.5 / pow(sigma, 2);
-//
-//    std::vector<double> spectrum = subtractValueFromVector(p_x0, p_x);
-//    spectrum = squaredVector(spectrum);
-//    spectrum = multiplyValueFromVector(-c1, spectrum);
-//    spectrum = exponentVector(spectrum);
-//    spectrum = multiplyValueFromVector(p_intensity * c0, spectrum);
-//
-//    return spectrum;
-//}
-
-
-// (!) szerintem ezek a fuggvenyek mehetnenek a spectrum modell-be
-
 Eigen::ArrayX<double> PeakModel::Gaussian()
 {
     Eigen::ArrayX<double> spectrum(p_npix);
@@ -96,20 +78,6 @@ Eigen::ArrayX<double> PeakModel::Gaussian()
 
     return spectrum;
 }
-
-//std::vector<double> PeakModel::LorenztNonOptimized() {
-//
-//    double gamma = abs(p_fwhm) / 2;
-//
-//    std::vector<double> spectrum = subtractValueFromVector(p_x0, p_x);
-//    spectrum = divideValueFromVector(gamma, spectrum);
-//    spectrum = squaredVector(spectrum);
-//    spectrum = addValueFromVector(1.0, spectrum);
-//    spectrum = multiplyValueFromVector(gamma * M_PI, spectrum);
-//    spectrum = divideVectorFromValue(p_intensity, spectrum);
-//
-//    return spectrum;
-//}
 
 Eigen::ArrayX<double> PeakModel::Lorenzt() {
     Eigen::ArrayX<double> spectrum(p_npix);

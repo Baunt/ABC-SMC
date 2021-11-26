@@ -16,21 +16,15 @@ int main(int argc, char** argv) {
         DEBUG = true;
     int npix = 256;
 
-    std::map<std::string, Eigen::ArrayX<double>> realSpectrum;
-    //peak 1
-    Eigen::ArrayX<double> peak1(3);
-    peak1 << 0.67, 0.11, 2.3;
-    //peak 2
-    Eigen::ArrayX<double> peak2(3);
-    peak2 << 0.51, 0.20, 0.5;
-    realSpectrum.insert(std::pair<std::string, Eigen::ArrayX<double>>("Gaussian", peak1));
-    realSpectrum.insert(std::pair<std::string, Eigen::ArrayX<double>>("Lorentzian", peak2));
+    Eigen::ArrayX<double> realSpectrum(6);
+    realSpectrum << 0.67, 0.11, 2.3, 0.51, 0.20, 0.5;
+    std::vector<PeakType> peaks {Gauss, Lorentz};
+    Eigen::ArrayX<double> energy = Eigen::VectorXd::LinSpaced(npix, 0, 1);
+    Eigen::ArrayX<double> intensity = getSimulatedSpectrum(realSpectrum, peaks, 256, true);
+    SpectrumModel spectrumModel = SpectrumModel(energy, intensity);
+    spectrumModel.SetPeakList(peaks);
 
-    //simulated spectrum
-    SpectrumModel simulatedSpectrumModel = SpectrumModel(npix);
-    Eigen::ArrayX<double> simSpectrum = simulatedSpectrumModel.calculate(realSpectrum, true);
-
-    AbcSmcFit().Fit(simulatedSpectrumModel, simSpectrum);
+    AbcSmcFit().Fit(spectrumModel);
 
     return 0;
 }

@@ -21,11 +21,7 @@ public:
 
     Eigen::ArrayX<double> Gaussian();
 
-//    std::vector<double> GaussianNonOptimized();
-
     Eigen::ArrayX<double> Lorenzt();
-
-//    std::vector<double> LorenztNonOptimized();
 
     PeakModel(const Eigen::ArrayX<double>& x, double x0, double fwhm, double intensity, int npix, std::string type)
     {

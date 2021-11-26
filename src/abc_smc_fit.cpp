@@ -21,26 +21,16 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
                    Eigen::ArrayX<double>& scalings,
                    Eigen::LLT<Eigen::MatrixXd>& llt,
                    Eigen::ArrayX<double>& prior_likelihoods,
-                   const Eigen::ArrayX<double>& spectrum,
                    SpectrumModel spectrumModel){
+
+    pcg32 rng = PcgRandomGenerator::GetInstance()->value();
+    std::normal_distribution<double> std_dist(0.0, 1.0); // normal distribution with mu=0, sigma=1
+    std::uniform_real_distribution<double> uni_dist(0.0, 1.0); // uniform ditribution between: 0 <= r < 1
+    auto rand_fn = [&](){return std_dist(rng);};// lambda that generates random numbers
+
     for (int draw = 0; draw < draws; ++draw) {
-        if (DEBUG)
-        {
-            std::cout << "  Sample " << draw << "\n";
-            std::cout << posteriors(draw, 0) << " " << posteriors(draw, 1) << " " << posteriors(draw, 2) << " " << posteriors(draw, 3) << " " << posteriors(draw, 4) << " " << posteriors(draw, 5) << "\n";
-            std::cout << "    err        pl            ll          beta     logp_0    logp_1          d_logp         r\n";
-        }
-
-        //TODO melyik legyen?
-        //Eigen::MatrixXd randomsForDeltas = Eigen::MatrixXd::Random(n_steps, 6);
-        pcg32 rng = PcgRandomGenerator::GetInstance()->value();
-        std::normal_distribution<double> std_dist(0.0, 1.0); // normal distribution with mu=0, sigma=1
-        std::uniform_real_distribution<double> uni_dist(0.0, 1.0); // uniform ditribution between: 0 <= r < 1
-        auto rand_fn = [&](){return std_dist(rng);};// lambda that generates random numbers
-        Eigen::MatrixXd random_matrix = Eigen::MatrixXd::NullaryExpr(n_steps, 6, rand_fn);// matrix expression
-
-        Eigen::MatrixXd randomsForDeltas = random_matrix;// saving the elements to a matrix
-        Eigen::MatrixXd deltas = randomsForDeltas * llt.matrixLLT();
+        Eigen::MatrixXd random_matrix = Eigen::MatrixXd::NullaryExpr(nparams, n_steps, rand_fn);// matrix expression
+        Eigen::MatrixXd deltas = llt.matrixLLT() * random_matrix;
         deltas *= scalings[draw];
 
         int accepted = 0;
@@ -52,15 +42,14 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
         Eigen::ArrayX<double> simulatedSpectrum;
 
         for (int i = 0; i < n_steps; ++i) {
-            Eigen::ArrayX<double> delta = deltas.row(i);
+            Eigen::ArrayX<double> delta = deltas.col(i);
             Eigen::ArrayX<double> q_new = q_old + delta;
-            simulatedSpectrum = staticPeakModel(spectrumModel.x, q_new);
-            Eigen::ArrayX<double> spectrumDiffs(spectrumModel.npix);
+            simulatedSpectrum = staticPeakModel(spectrumModel.energy, q_new);
+            Eigen::ArrayX<double> spectrumDiffs(spectrumModel.energy.size());
 
-            spectrumDiffs = abs(spectrum - simulatedSpectrum);
+            spectrumDiffs = abs(spectrumModel.intensity - simulatedSpectrum);
 
             double pl = 0.0;
-            //TODO
             for (int dist = 0; dist < spectrumModel.InitialGuess.capacity(); ++dist) {
                 pl += spectrumModel.InitialGuess[dist].LogP(q_new[dist]);
             }
@@ -70,7 +59,6 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
             double delta_tempered_logp = new_tempered_logp - tempered_logp[draw];
 
             double r = log(uni_dist(rng));
-            // std::cout << r << "  " << delta_tempered_logp << "\n";
             if (r < delta_tempered_logp){
                 q_old = q_new;
                 accepted += 1;
@@ -78,22 +66,6 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
                 old_likelihood = ll;
                 old_tempered_logp = new_tempered_logp;
             }
-
-            if (DEBUG){
-                char sacc = '-';
-                std::cout << std::setw(8) << std::fixed << std::setprecision(3) << mean_abs_error << " | ";
-                std::cout << std::setw(8) << std::fixed << std::setprecision(3) << pl << " + ";
-                std::cout << std::setw(12) << std::fixed << std::setprecision(2) << ll << " * ";
-                std::cout << std::setw(8) << std::fixed << std::setprecision(6) << beta << " = ";
-                std::cout << std::setw(8) << std::fixed << std::setprecision(3) << new_tempered_logp << " - ";
-                std::cout << std::setw(8) << std::fixed << std::setprecision(3) << tempered_logp[draw];
-                std::cout << std::setw(10) << std::fixed << std::setprecision(3) << " -> "  << delta_tempered_logp << " ?? ";
-                std::cout << std::setw(8) << std::fixed << std::setprecision(3) << r << " ";
-                if (r < delta_tempered_logp)
-                    sacc = '+';
-                std::cout << sacc << "\n";
-            }
-
         }
         prior_likelihoods(draw) = old_prior;
         likelihoods(draw) = old_likelihood;
@@ -109,8 +81,7 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
 
 }
 
-void AbcSmcFit::Fit(SpectrumModel spectrumModel, const Eigen::ArrayX<double>& spectrum) {
-    //abc-smc fitting
+void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
     int nparams = 6;
     int draws = 1000;
     double epsilon = 0.01;
@@ -123,25 +94,13 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel, const Eigen::ArrayX<double>& sp
     double p_acc_rate=0.99;
     bool tune_steps= true;
     int max_steps = n_steps;
-    int dimension = nparams;
     double factor = (2.38 * 2.38) / nparams;
     int proposed = draws * n_steps;
 
     Eigen::ArrayX<double> acc_per_chain(draws);
     Eigen::ArrayX<double> scalings(draws);
     Eigen::ArrayX<double> prior_likelihoods(draws);
-    /*   x0 fwhm0 int0 x1 fwhm1 int2
-       [ 0    0    0   0    0    0 ]
-       [ 0    0    0   0    0    0 ]
-       [ 0    0    0   0    0    0 ]
-       [ 0    0    0   0    0    0 ]
-       [ 0    0    0   0    0    0 ]
 
-       Posteriors vector:
-       columns = nparams
-       row = drwas
-     * */
-    SpectrumModel simulatedSpectrumModel = SpectrumModel(spectrumModel.npix);
     Eigen::ArrayXX<double> posteriors = spectrumModel.GenerateInitialPopulation(draws, nparams);
     Eigen::ArrayXX<double> init_population = posteriors;
     Eigen::ArrayX<double> likelihoods(draws);
@@ -159,26 +118,14 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel, const Eigen::ArrayX<double>& sp
     std::cout << "\n";
 
     for (int i = 0; i < draws; ++i) {
-        //TODO
         for (int j = 0; j < posteriors.row(i).size(); ++j) {
             prior_likelihoods(i) += spectrumModel.InitialGuess[j].LogP(init_population(i, j));
         }
 
-        std::map<std::string, Eigen::ArrayX<double>> simSpectrum;
-        Eigen::ArrayX<double> peak1FromInitPopulation(3);
-        peak1FromInitPopulation << init_population(i, 0), init_population(i, 1), init_population(i, 2);
-
-        Eigen::ArrayX<double> peak2FromInitPopulation(3);
-        peak2FromInitPopulation << init_population(i, 3), init_population(i, 4), init_population(i, 5);
-
-        simSpectrum.insert(std::pair<std::string, Eigen::ArrayX<double>>("Gaussian", peak1FromInitPopulation));
-        simSpectrum.insert(std::pair<std::string, Eigen::ArrayX<double>>("Lorentzian", peak2FromInitPopulation));
-        Eigen::ArrayX<double> simulatedSpectrum = simulatedSpectrumModel.calculate(simSpectrum, false);
-
-        Eigen::ArrayX<double> spectrumDiffs(spectrumModel.npix);
-        spectrumDiffs = (spectrum - simulatedSpectrum).cwiseAbs();
-
-        double mean_abs_error = spectrumDiffs.mean();
+        Eigen::ArrayX<double> parameters(6);
+        parameters << init_population(i, 0), init_population(i, 1), init_population(i, 2),
+                      init_population(i, 3), init_population(i, 4), init_population(i, 5);
+        double mean_abs_error = spectrumModel.ErrorCalculation(spectrumModel.Calculate(parameters,false));
 
         likelihoods(i) = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) + log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
     }
@@ -201,10 +148,6 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel, const Eigen::ArrayX<double>& sp
         double max = likelihoods.maxCoeff();
         ll_diffs = likelihoods - max;
 
-//    ' ___________________________________________'
-//    ' |                                         |'
-//    ' | Fontossagi sulyok es beta meghatarozasa |'
-//    ' |_________________________________________|'
 #pragma region importance_weights
         std::cout << "    Stage " << stage << " - Importance weights\n";
         Eigen::ArrayX<double> weights_un(ll_diffs.size());
@@ -244,10 +187,6 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel, const Eigen::ArrayX<double>& sp
         beta = newBeta;
         std::cout << "    Stage " << stage << " - new beta = " << beta << "\n";
 #pragma endregion importance_weights
-//    ' ______________________________________________'
-//    ' |                                            |'
-//    ' | Mintavetelezes a fontossagi sulyok alapjan |'
-//    ' |____________________________________________|'
 
 #pragma region resampling
         std::cout << "    Stage " << stage << " - Resampling\n";
@@ -268,10 +207,6 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel, const Eigen::ArrayX<double>& sp
         Eigen::LLT<Eigen::MatrixXd> llt(cov);
 
 #pragma endregion resampling
-//    ' ______________________________________________'
-//    ' |                                            |'
-//    ' | Algoritmus hangolasa                       |'
-//    ' |____________________________________________|'
 
 #pragma region tuning
         std::cout << "    Stage " << stage << " - Tuning\n";
@@ -296,11 +231,6 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel, const Eigen::ArrayX<double>& sp
 
 #pragma endregion tuning
 
-
-//    ' ______________________________________________'
-//    ' |                                            |'
-//    ' | A monte carlo lancok futtatasa             |'
-//    ' |____________________________________________|'
 #pragma region MCMC
         std::cout << "    Stage " << stage << " - MCMC chains\n";
 
@@ -319,7 +249,6 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel, const Eigen::ArrayX<double>& sp
                       scalings,
                       llt,
                       prior_likelihoods,
-                      spectrum,
                       spectrumModel);
 
         Eigen::MatrixXd copyPosteriorsInLoop = posteriors;
