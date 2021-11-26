@@ -44,7 +44,7 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
         for (int i = 0; i < n_steps; ++i) {
             Eigen::ArrayX<double> delta = deltas.col(i);
             Eigen::ArrayX<double> q_new = q_old + delta;
-            simulatedSpectrum = staticPeakModel(spectrumModel.energy, q_new);
+            simulatedSpectrum = spectrumModel.Calculate(q_new, false);
             Eigen::ArrayX<double> spectrumDiffs(spectrumModel.energy.size());
 
             spectrumDiffs = abs(spectrumModel.intensity - simulatedSpectrum);
