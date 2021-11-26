@@ -26,9 +26,8 @@ public:
     PcgRandomGenerator(PcgRandomGenerator &other) = delete;
     void operator=(const PcgRandomGenerator &) = delete;
 
-    static PcgRandomGenerator *GetInstance(){
-        pcg_extras::seed_seq_from<std::random_device> seed_source;
-        pcg32 rng(seed_source);
+    static PcgRandomGenerator *GetInstance(int seed = -1){
+        pcg32 rng(seed);
 
         if(singleton_==nullptr){
             singleton_ = new PcgRandomGenerator(rng);
