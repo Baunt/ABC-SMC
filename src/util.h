@@ -13,21 +13,21 @@
 #include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 #include "spectrum_model.h"
 
-Eigen::ArrayX<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues);
+Eigen::Array<int, Eigen::Dynamic, 1> randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weights, pcg32 & rng);
 
-Eigen::Array<int, Eigen::Dynamic, 1> randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weights);
+Eigen::ArrayX<double> resampling(const Eigen::ArrayX<double>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices); //        (!)
 
-Eigen::ArrayXX<double> resampling(const Eigen::ArrayX<double>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices);
-
-Eigen::ArrayXX<double> resampling(const Eigen::ArrayXX<double>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices);
-
-Eigen::ArrayX<double> staticPeakModel(const Eigen::ArrayX<double>& x, const Eigen::ArrayX<double>& params);
+Eigen::ArrayXX<double> resampling_rows(const Eigen::ArrayXX<double>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices); // (!)
 
 void populationStatistics(const Eigen::MatrixXd& population);
 
 Eigen::ArrayX<double> getSimulatedSpectrum(const Eigen::ArrayX<double>& parameters, std::vector<PeakType> peaks, int npix, bool withNoise);
 
-// TODO unused functions
+/*
+Eigen::ArrayX<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues);
+
+Eigen::ArrayX<double> staticPeakModel(const Eigen::ArrayX<double>& x, const Eigen::ArrayX<double>& params);
+
 std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>> &m);
 
 double arithmetic_mean(const std::vector<double> &vector);
@@ -43,6 +43,8 @@ std::vector<double> resampling(std::vector<double> vector, std::vector<int> indi
 double getUniformRandomNumber();
 
 void populationStatistics(std::vector<std::vector<double>> population);
+*/
+
 
 //template<class T> void reorder(std::vector<T> &v, std::vector<size_t> const &order ){
 //    for ( int s = 1, d; s < order.capacity(); ++ s ) {

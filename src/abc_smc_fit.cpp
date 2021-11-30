@@ -7,11 +7,7 @@
 #include <iomanip>
 #include "abc_smc_fit.h"
 #include "util.h"
-#include "peak_model.h"
 #include "../include/third-party-library/Eigen/src/Cholesky/LLT.h"
-#include "pcg_random_generator.h"
-
-bool DEBUG;
 
 void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int nparams,
                    Eigen::ArrayXX<double>& posteriors,
@@ -21,9 +17,9 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
                    Eigen::ArrayX<double>& scalings,
                    Eigen::LLT<Eigen::MatrixXd>& llt,
                    Eigen::ArrayX<double>& prior_likelihoods,
-                   SpectrumModel spectrumModel){
+                   SpectrumModel spectrumModel,
+                   pcg32 & rng){
 
-    pcg32 rng = PcgRandomGenerator::GetInstance()->value();
     std::normal_distribution<double> std_dist(0.0, 1.0); // normal distribution with mu=0, sigma=1
     std::uniform_real_distribution<double> uni_dist(0.0, 1.0); // uniform ditribution between: 0 <= r < 1
     auto rand_fn = [&](){return std_dist(rng);};// lambda that generates random numbers
@@ -44,7 +40,7 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
         for (int i = 0; i < n_steps; ++i) {
             Eigen::ArrayX<double> delta = deltas.col(i);
             Eigen::ArrayX<double> q_new = q_old + delta;
-            simulatedSpectrum = spectrumModel.Calculate(q_new, false);
+            simulatedSpectrum = spectrumModel.Calculate(q_new);
             Eigen::ArrayX<double> spectrumDiffs(spectrumModel.energy.size());
 
             spectrumDiffs = abs(spectrumModel.intensity - simulatedSpectrum);
@@ -97,11 +93,12 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
     double factor = (2.38 * 2.38) / nparams;
     int proposed = draws * n_steps;
 
+    pcg32 rng(1234);
     Eigen::ArrayX<double> acc_per_chain(draws);
     Eigen::ArrayX<double> scalings(draws);
     Eigen::ArrayX<double> prior_likelihoods(draws);
 
-    Eigen::ArrayXX<double> posteriors = spectrumModel.GenerateInitialPopulation(draws, nparams);
+    Eigen::ArrayXX<double> posteriors = spectrumModel.GenerateInitialPopulation(draws, nparams, rng);
     Eigen::ArrayXX<double> init_population = posteriors;
     Eigen::ArrayX<double> likelihoods(draws);
 
@@ -113,56 +110,46 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
         scalings = 1;
     }
 
-    Eigen::MatrixXd copyPosteriors = posteriors;
-    populationStatistics(copyPosteriors);
+    populationStatistics(posteriors);
     std::cout << "\n";
 
-    for (int i = 0; i < draws; ++i) {
-        for (int j = 0; j < posteriors.row(i).size(); ++j) {
-            prior_likelihoods(i) += spectrumModel.InitialGuess[j].LogP(init_population(i, j));
+    for (int i = 0; i < draws; ++i) {        
+        prior_likelihoods(i) = 0.0;
+        Eigen::ArrayX<double> parameters = posteriors.row(i);
+        for (int j = 0; j < nparams; ++j) {        
+            prior_likelihoods(i) += spectrumModel.InitialGuess[j].LogP(parameters(j));
         }
 
-        Eigen::ArrayX<double> parameters(6);
-        parameters << init_population(i, 0), init_population(i, 1), init_population(i, 2),
-                      init_population(i, 3), init_population(i, 4), init_population(i, 5);
-        double mean_abs_error = spectrumModel.ErrorCalculation(spectrumModel.Calculate(parameters,false));
-
+        double mean_abs_error = spectrumModel.ErrorCalculation(parameters);
         likelihoods(i) = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) + log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
     }
 
 
     while (beta < 1){
-        std::cout << "Stage: " << std::setw(3) << stage << "  ";
-        std::cout << "Beta: " << std::fixed << std::setprecision(8) << beta << "  ";
-        std::cout << "Steps: " << std::setw(2) << n_steps << "  ";
-        std::cout << "Acceptance rate: " << std::fixed << std::setprecision(8) << acc_rate << std::endl;
+        std::cout << "Stage: " << std::setw(3) << stage << "    ";
+        std::cout << "Beta: " << std::fixed << std::setprecision(6) << beta << "    ";
+        std::cout << "Steps: " << std::setw(2) << n_steps << "    ";
+        std::cout << "Acc. rate: " << std::fixed << std::setprecision(6) << acc_rate << std::endl;
 
         double lowBeta = beta;
         double oldBeta = beta;
         double upBeta = 2.0;
         double newBeta;
 
-        int rN = int(round(int(likelihoods.size()) * threshold));
+        int rN = int(round(likelihoods.size() * threshold));
 
-        Eigen::ArrayX<double> ll_diffs(likelihoods.size());
-        double max = likelihoods.maxCoeff();
-        ll_diffs = likelihoods - max;
+        Eigen::ArrayX<double> ll_diffs = likelihoods - likelihoods.maxCoeff();
 
 #pragma region importance_weights
-        std::cout << "    Stage " << stage << " - Importance weights\n";
-        Eigen::ArrayX<double> weights_un(ll_diffs.size());
         Eigen::ArrayX<double> weights(ll_diffs.size());
 
         while ((upBeta - lowBeta) > 1e-6 ){
-            double sum_of_weights_un = 0;
             double sum_of_square_weights = 0;
             newBeta = (lowBeta + upBeta) / 2.0;
 
-            weights_un = exp(newBeta - oldBeta) * ll_diffs;
-            sum_of_weights_un = weights_un.sum();
-
-            weights = weights_un / sum_of_weights_un;
-            sum_of_square_weights = sum_of_square_weights + weights.square().sum();
+            weights = exp((newBeta - oldBeta) * ll_diffs);
+            weights /= weights.sum();
+            sum_of_square_weights = weights.square().sum();
 
             int ESS = int(round(1.0 / sum_of_square_weights));
             if (ESS == rN){
@@ -179,21 +166,17 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
         if (newBeta >= 1){
             double sum_of_weights_un = 0;
             newBeta = 1;
-            weights_un = exp(newBeta - oldBeta) * ll_diffs;
-            sum_of_weights_un = weights_un.sum();
-            weights = weights_un / sum_of_weights_un;
+            weights = exp((newBeta - oldBeta) * ll_diffs);
+            weights /= weights.sum();
         }
 
         beta = newBeta;
-        std::cout << "    Stage " << stage << " - new beta = " << beta << "\n";
 #pragma endregion importance_weights
 
 #pragma region resampling
-        std::cout << "    Stage " << stage << " - Resampling\n";
-        //TODO
-        Eigen::ArrayX<int> resamplingIndexes = randomWeightedIndices(draws, weights);
+        Eigen::ArrayX<int> resamplingIndexes = randomWeightedIndices(draws, weights, rng);
 
-        posteriors = resampling(posteriors, resamplingIndexes);
+        posteriors = resampling_rows(posteriors, resamplingIndexes);
         prior_likelihoods = resampling(prior_likelihoods, resamplingIndexes);
         likelihoods = resampling(likelihoods, resamplingIndexes);
         scalings = resampling(scalings, resamplingIndexes);
@@ -209,16 +192,10 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
 #pragma endregion resampling
 
 #pragma region tuning
-        std::cout << "    Stage " << stage << " - Tuning\n";
         if (stage > 0){
             double ave_scalings = exp(log(scalings.mean() + acc_per_chain.mean() - 0.234));
 
-            std::cout << "      <scalings> = " << scalings.mean() << "\n";
-            std::cout << "      <acc_per_chain> = " << acc_per_chain.mean() << "\n";
-            std::cout << "      ave_scaling = " << ave_scalings << "\n";
-
             scalings = 0.5 * (ave_scalings + exp(scalings.log() + (acc_per_chain - 0.234)));
-            std::cout << "      <scalings> = " << scalings.mean() << "\n";
 
             if (tune_steps){
                 acc_rate = std::max(1.0 / proposed, acc_rate);
@@ -226,16 +203,11 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
                 n_steps = std::min(max_steps, std::max(2, t));
             }
             proposed = draws * n_steps;
-            std::cout << "      acc_rate = " << acc_rate << "\n";
         }
 
 #pragma endregion tuning
 
 #pragma region MCMC
-        std::cout << "    Stage " << stage << " - MCMC chains\n";
-
-        Eigen::MatrixXd copyPosteriorsInMC = posteriors;
-        populationStatistics(copyPosteriorsInMC);
 
         runMcMcChains(draws,
                       n_steps,
@@ -249,15 +221,17 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
                       scalings,
                       llt,
                       prior_likelihoods,
-                      spectrumModel);
+                      spectrumModel, 
+                      rng);
 
-        Eigen::MatrixXd copyPosteriorsInLoop = posteriors;
-        populationStatistics(copyPosteriorsInLoop);
         acc_rate = acc_per_chain.mean();
 
         #pragma endregion MCMC
 
         stage += 1;
-        if (stage > 20) {break;}
     }
+
+    std::cout << "\nFinal population statistics: \n    ";
+    populationStatistics(posteriors);
+
 }

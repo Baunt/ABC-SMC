@@ -3,48 +3,24 @@
 //
 #define _USE_MATH_DEFINES
 
-#include <algorithm>
-#include <map>
 #include "util.h"
-#include "../include/third-party-library/pcg-cpp/pcg_extras.hpp"
-#include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
-#include "pcg_random_generator.h"
 #include <iomanip>
 #include <random>
 #include <cstdlib>
 
-Eigen::ArrayX<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues){
-    pcg32 rng = PcgRandomGenerator::GetInstance()->value();
 
-    std::normal_distribution<double> nd(x_mu, x_sigma);
-    std::vector<double> result;
-    result.reserve(numberOfValues);
-    while(numberOfValues-- > 0)
-    {
-        result.push_back(nd(rng));
-    }
-
-    Eigen::ArrayX<double> res(result.capacity());
-    for (int i = 0; i < result.capacity(); ++i) {
-        res(i) = result[i];
-    }
-
-    return res;
-}
-
-Eigen::ArrayX<int> randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weightsOut)
+Eigen::ArrayX<int> randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weights, pcg32 & rng)
 {
-    pcg32 rng = PcgRandomGenerator::GetInstance()->value();
-    int nweights = weightsOut.size();
+    int nweights = weights.size();
     Eigen::ArrayX<int> returnedIndices(draws);
     Eigen::ArrayX<double> cumulativeWeights(nweights);
     std::uniform_real_distribution<double> uniformDistribution(0.0, 1.0);
 
-    // Calculate the cumulative weightsOut
-    double s = weightsOut(0);
+    // Calculate the cumulative weights
+    double s = weights(0);
     cumulativeWeights(0) = s;
     for (int i = 1; i < nweights; ++i) {
-        s += weightsOut(i);
+        s += weights(i);
         cumulativeWeights(i) = s;
     }
 
@@ -62,46 +38,32 @@ Eigen::ArrayX<int> randomWeightedIndices(int draws, const Eigen::ArrayX<double>&
     return returnedIndices;
 }
 
-Eigen::ArrayXX<double> resampling(const Eigen::ArrayX<double>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices){
-    Eigen::ArrayXX<double> resampledResult(vector);
-    for (int i = 0; i < vector.cols(); ++i) {
+Eigen::ArrayX<double> resampling(const Eigen::ArrayX<double>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices){
+    Eigen::ArrayX<double> resampledResult(vector.size());  
+    for (int i = 0; i < vector.size(); ++i) {
         resampledResult(i)= vector(indices(i));
     }
 
     return resampledResult;
 }
 
-Eigen::ArrayXX<double> resampling(const Eigen::ArrayXX<double>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices){
-    Eigen::ArrayXX<double> resampledResult(vector);
-    for (int i = 0; i < vector.cols(); ++i) {
-        resampledResult(i)= vector(indices(i));
+Eigen::ArrayXX<double> resampling_rows(const Eigen::ArrayXX<double>& array, const Eigen::Array<int, Eigen::Dynamic, 1>& indices){
+    Eigen::ArrayXX<double> resampledResult(array.rows(), array.cols());    
+    for (int i = 0; i < array.rows(); ++i) {
+        resampledResult.row(i)= array.row(indices(i));
     }
 
     return resampledResult;
 }
 
-Eigen::ArrayX<double> staticPeakModel(const Eigen::ArrayX<double>& x, const Eigen::ArrayX<double>& params)
-{
-    Eigen::ArrayX<double> spectrum(x.size());
-
-    double sigma = std::abs(params(1)) / 2.35482;
-    double c0 = params(2) / (sigma * 2.5066283);
-    double c1 = 0.5 / (sigma * sigma);
-
-    double gamma = std::abs(params(4)) / 2;
-    double inverseGamma = 1.0 / gamma;
-
-    for (int i = 0; i < x.size(); ++i)
-    {
-        spectrum(i) = c0 * std::exp(-c1 * (x(i) - params(0)) * (x(i) - params(0)));
-        spectrum(i) += params(5) / (gamma * M_PI * (1.0 + ((x(i) - params(3)) * inverseGamma) * ((x(i) - params(3)) * inverseGamma)));
-    }
-    return spectrum;
-}
 
 Eigen::ArrayX<double> getSimulatedSpectrum(const Eigen::ArrayX<double>& parameters, std::vector<PeakType> peaks, int npix, bool withNoise){
     Eigen::ArrayX<double> energy = Eigen::VectorXd::LinSpaced(npix, 0, 1);
-    Eigen::ArrayX<double> noise = getDistribution(0.0, 1.0, npix);
+    pcg32 rng(4444);
+    std::normal_distribution<double> norm_dist(0.0, 1.0);
+    auto rand_fn = [&](){return norm_dist(rng);};
+    Eigen::ArrayX<double> noise = Eigen::ArrayX<double>::NullaryExpr(npix, rand_fn);
+
     Eigen::ArrayX<double> internalSpectrum(npix);
     internalSpectrum.setZero();
 
@@ -126,6 +88,7 @@ Eigen::ArrayX<double> getSimulatedSpectrum(const Eigen::ArrayX<double>& paramete
                 double gamma = std::abs(lorentzParametersSegment[1]) / 2;
                 double inverseGamma = 1.0 / gamma;
                 spectrum = lorentzParametersSegment[2] / (gamma * M_PI * (1.0 + ((energy - lorentzParametersSegment[0]) * inverseGamma) * ((energy - lorentzParametersSegment[0]) * inverseGamma)));
+                internalSpectrum  += spectrum;
                 break;
             }
             default:
@@ -141,8 +104,6 @@ Eigen::ArrayX<double> getSimulatedSpectrum(const Eigen::ArrayX<double>& paramete
     return internalSpectrum;
 }
 
-
-//TODO
 void populationStatistics(const Eigen::MatrixXd& population)
 {
     Eigen::VectorXd means = population.colwise().mean();
@@ -157,7 +118,49 @@ void populationStatistics(const Eigen::MatrixXd& population)
     std::cout << "\n";
 }
 
-// TODO unused functions
+
+#pragma region UNUSED FUNCTIONS
+/*
+
+Eigen::ArrayX<double> getDistribution(double x_mu, double x_sigma, size_t numberOfValues){
+    pcg32 rng = PcgRandomGenerator::GetInstance()->value();
+
+    std::normal_distribution<double> nd(x_mu, x_sigma);
+    std::vector<double> result;
+    result.reserve(numberOfValues);
+    while(numberOfValues-- > 0)
+    {
+        result.push_back(nd(rng));
+    }
+
+    Eigen::ArrayX<double> res(result.capacity());
+    for (int i = 0; i < result.capacity(); ++i) {
+        res(i) = result[i];
+    }
+
+    return res;
+}
+
+Eigen::ArrayX<double> staticPeakModel(const Eigen::ArrayX<double>& x, const Eigen::ArrayX<double>& params)
+{
+    Eigen::ArrayX<double> spectrum(x.size());
+
+    double sigma = std::abs(params(1)) / 2.35482;
+    double c0 = params(2) / (sigma * 2.5066283);
+    double c1 = 0.5 / (sigma * sigma);
+
+    double gamma = std::abs(params(4)) / 2;
+    double inverseGamma = 1.0 / gamma;
+
+    for (int i = 0; i < x.size(); ++i)
+    {
+        spectrum(i) = c0 * std::exp(-c1 * (x(i) - params(0)) * (x(i) - params(0)));
+        spectrum(i) += params(5) / (gamma * M_PI * (1.0 + ((x(i) - params(3)) * inverseGamma) * ((x(i) - params(3)) * inverseGamma)));
+    }
+    return spectrum;
+}
+
+
 std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>> &m)
 {
     std::vector<std::vector<double>> result(m[0].size(), std::vector<double>(m.size()));
@@ -328,3 +331,6 @@ void populationStatistics(std::vector<std::vector<double>> population)
     }
     std::cout << "\n";
 }
+
+*/
+#pragma endregion UNUSED FUNCTIONS

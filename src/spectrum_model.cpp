@@ -3,10 +3,7 @@
 //
 #define _USE_MATH_DEFINES
 #include "spectrum_model.h"
-
 #include <utility>
-#include "pcg_random_generator.h"
-#include "util.h"
 
 Eigen::ArrayX<double> lorentz(const Eigen::ArrayX<double>& x, double x0, double fwhm, double intensity, int npix) {
     Eigen::ArrayX<double> spectrum(npix);
@@ -30,8 +27,7 @@ Eigen::ArrayX<double> gaussian(const Eigen::ArrayX<double>& x, double x0, double
     return spectrum;
 }
 
-Eigen::ArrayX<double> SpectrumModel::Calculate(Eigen::ArrayX<double> parameters, bool withNoise) {
-    Eigen::ArrayX<double> noise = getDistribution(0.0, 1.0, npix);
+Eigen::ArrayX<double> SpectrumModel::Calculate(Eigen::ArrayX<double> parameters) {
     Eigen::ArrayX<double> internalSpectrum(npix);
     internalSpectrum.setZero();
 
@@ -57,14 +53,10 @@ Eigen::ArrayX<double> SpectrumModel::Calculate(Eigen::ArrayX<double> parameters,
         }
     }
 
-    if (withNoise){
-        internalSpectrum += noise;
-    }
-
     return internalSpectrum;
 }
 
-Eigen::ArrayXX<double> SpectrumModel::GenerateInitialPopulation(int nsamples, int nparams) {
+Eigen::ArrayXX<double> SpectrumModel::GenerateInitialPopulation(int nsamples, int nparams, pcg32 & rng) {
 
     Eigen::ArrayXX<double> posteriors(nsamples , nparams);
 
@@ -83,7 +75,7 @@ Eigen::ArrayXX<double> SpectrumModel::GenerateInitialPopulation(int nsamples, in
     InitialGuess.push_back(int1);
 
     for (int i = 0; i < InitialGuess.size(); ++i) {
-        Eigen::ArrayX<double> tmp = InitialGuess[i].Sample(nsamples);
+        Eigen::ArrayX<double> tmp = InitialGuess[i].Sample(nsamples, rng);
         posteriors.col(i) = tmp;
     }
 
@@ -94,10 +86,7 @@ void SpectrumModel::SetPeakList(std::vector<PeakType>& peakList) {
     this->peaks = peakList;
 }
 
-double SpectrumModel::ErrorCalculation(Eigen::ArrayX<double> diffSpectrum) {
-    Eigen::ArrayX<double> spectrumDiffs(npix);
-    spectrumDiffs = (intensity - diffSpectrum).cwiseAbs();
-
-    return spectrumDiffs.mean();
+double SpectrumModel::ErrorCalculation(Eigen::ArrayX<double> parameters) {
+    return ((intensity - SpectrumModel::Calculate(parameters)).cwiseAbs()).mean();
 }
 
