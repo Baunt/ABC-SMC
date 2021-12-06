@@ -12,6 +12,7 @@
 #include "../include/third-party-library/Eigen/Core"
 #include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 #include "spectrum_model.h"
+#include "../include/third-party-library/csv_writer.h"
 
 Eigen::Array<int, Eigen::Dynamic, 1> randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weights, pcg32 & rng);
 
@@ -19,7 +20,7 @@ Eigen::ArrayX<double> resampling(const Eigen::ArrayX<double>& vector, const Eige
 
 Eigen::ArrayXX<double> resampling_rows(const Eigen::ArrayXX<double>& vector, const Eigen::Array<int, Eigen::Dynamic, 1>& indices); // (!)
 
-void populationStatistics(const Eigen::MatrixXd& population);
+void populationStatistics(const Eigen::MatrixXd& population, CSVWriter& csv);
 
 Eigen::ArrayX<double> getSimulatedSpectrum(const Eigen::ArrayX<double>& parameters, std::vector<PeakType> peaks, int npix, bool withNoise);
 

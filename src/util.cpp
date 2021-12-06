@@ -7,6 +7,32 @@
 #include <iomanip>
 #include <random>
 #include <cstdlib>
+#include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
+#include "../include/third-party-library/csv_writer.h"
+#include <mutex>
+#include <fstream>
+#include <iostream>
+
+std::mutex logMutex;
+
+bool fileExists(std::string& fileName) {
+    return static_cast<bool>(std::ifstream(fileName));
+}
+
+template <typename filename, typename T1, typename T2>
+bool writeCsvFile(filename &fileName, T1 column1, T2 column2) {
+    std::lock_guard<std::mutex> csvLock(logMutex);
+    std::fstream file;
+    file.open (fileName, std::ios::out | std::ios::app);
+    if (file) {
+        file << "\"" << column1 << "\",";
+        file << "\"" << column2 << "\",";
+        file <<  std::endl;
+        return true;
+    } else {
+        return false;
+    }
+}
 
 
 Eigen::ArrayX<int> randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weights, pcg32 & rng)
@@ -59,7 +85,8 @@ Eigen::ArrayXX<double> resampling_rows(const Eigen::ArrayXX<double>& array, cons
 
 Eigen::ArrayX<double> getSimulatedSpectrum(const Eigen::ArrayX<double>& parameters, std::vector<PeakType> peaks, int npix, bool withNoise){
     Eigen::ArrayX<double> energy = Eigen::VectorXd::LinSpaced(npix, 0, 1);
-    pcg32 rng(4444);
+    pcg_extras::seed_seq_from<std::random_device> seed_source;
+    pcg32 rng(seed_source);
     std::normal_distribution<double> norm_dist(0.0, 1.0);
     auto rand_fn = [&](){return norm_dist(rng);};
     Eigen::ArrayX<double> noise = Eigen::ArrayX<double>::NullaryExpr(npix, rand_fn);
@@ -104,8 +131,11 @@ Eigen::ArrayX<double> getSimulatedSpectrum(const Eigen::ArrayX<double>& paramete
     return internalSpectrum;
 }
 
-void populationStatistics(const Eigen::MatrixXd& population)
+void populationStatistics(const Eigen::MatrixXd& population, CSVWriter& csv)
 {
+//    if(!fileExists(csvFile))
+//        writeCsvFile(csvFile, "Mean", "Standard Deviation");
+
     Eigen::VectorXd means = population.colwise().mean();
     Eigen::MatrixXd centered = population.rowwise() - means.adjoint();
     Eigen::MatrixXd cov = (centered.adjoint() * centered) / double(population.rows());
@@ -113,11 +143,16 @@ void populationStatistics(const Eigen::MatrixXd& population)
     std::cout << "      ";
     for (int i = 0; i<n; ++i)
     {
-        std::cout << std::setw(6) << std::fixed << std::setprecision(4) << means(i) << "(" << std::sqrt(cov(i,i)) << ")  ";
-    }
-    std::cout << "\n";
-}
+        csv.newRow() << means(i) << std::sqrt(cov(i,i));
+//
+//        if (!writeCsvFile(csvFile, means(i), std::sqrt(cov(i,i)))) {
+//            std::cerr << "Failed to write to file: " << csvFile << "\n";
+//        }
 
+//        std::cout << std::setw(6) << std::fixed << std::setprecision(4) << means(i) << "(" << std::sqrt(cov(i,i)) << ")  ";
+    }
+//    std::cout << "\n";
+}
 
 #pragma region UNUSED FUNCTIONS
 /*

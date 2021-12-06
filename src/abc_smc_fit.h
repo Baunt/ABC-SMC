@@ -8,10 +8,11 @@
 
 #include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 #include "spectrum_model.h"
+#include "../include/third-party-library/csv_writer.h"
 
 class AbcSmcFit {
 public:
-    void Fit(SpectrumModel spectrumModel);
+    void Fit(SpectrumModel spectrumModel, CSVWriter& writer);
 };
 
 

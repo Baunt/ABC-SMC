@@ -17,7 +17,11 @@ int main(int argc, char** argv) {
     SpectrumModel spectrumModel = SpectrumModel(energy, intensity);
     spectrumModel.SetPeakList(peaks);
 
-    AbcSmcFit().Fit(spectrumModel);
+    CSVWriter csv = CSVWriter();
+    for (int i = 0; i < 100; ++i) {
+        AbcSmcFit().Fit(spectrumModel, csv);
+
+    }
 
     return 0;
 }

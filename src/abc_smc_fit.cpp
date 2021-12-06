@@ -8,6 +8,9 @@
 #include "abc_smc_fit.h"
 #include "util.h"
 #include "../include/third-party-library/Eigen/src/Cholesky/LLT.h"
+#include "../include/third-party-library/matplotlib-cpp/matplotlibcpp.h"
+
+std::string csvFile = "algorithmGoodnessTest.csv";
 
 void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int nparams,
                    Eigen::ArrayXX<double>& posteriors,
@@ -77,10 +80,10 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
 
 }
 
-void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
+void AbcSmcFit::Fit(SpectrumModel spectrumModel, CSVWriter& writer) {
     int nparams = 6;
     int draws = 1000;
-    double epsilon = 0.01;
+    double epsilon = 1;
     int stage = 0;
     double beta = 0.0;
     int marginal_likelihood = 1;
@@ -93,7 +96,8 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
     double factor = (2.38 * 2.38) / nparams;
     int proposed = draws * n_steps;
 
-    pcg32 rng(1234);
+    pcg_extras::seed_seq_from<std::random_device> seed_source;
+    pcg32 rng(seed_source);
     Eigen::ArrayX<double> acc_per_chain(draws);
     Eigen::ArrayX<double> scalings(draws);
     Eigen::ArrayX<double> prior_likelihoods(draws);
@@ -102,7 +106,7 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
     Eigen::ArrayXX<double> init_population = posteriors;
     Eigen::ArrayX<double> likelihoods(draws);
 
-    std::cout << "Starting population statistics: \n    ";
+//    std::cout << "Starting population statistics: \n    ";
 
     if (factor < 1){
         scalings = factor;
@@ -110,8 +114,25 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
         scalings = 1;
     }
 
-    populationStatistics(posteriors);
-    std::cout << "\n";
+//    for (int i = 0; i < 5; ++i) {
+//        Eigen::ArrayX<double> internalSpectrum = spectrumModel.Calculate(posteriors.row(i));
+//
+//        std::vector<double> vec(internalSpectrum.data(), internalSpectrum.data() + internalSpectrum.rows() * internalSpectrum.cols());
+////    matplotlibcpp::plot(vec, {{"label", ""}});
+//        matplotlibcpp::plot(vec);
+////    matplotlibcpp::legend();
+//
+//    }
+//
+//    std::vector<double> vec(spectrumModel.intensity.data(), spectrumModel.intensity.data() + spectrumModel.intensity.rows() * spectrumModel.intensity.cols());
+//    matplotlibcpp::plot(vec, {{"label", "Szimulált spektrum"}});
+//    matplotlibcpp::legend();
+//    matplotlibcpp::title("Kezdeti populáció");
+//    matplotlibcpp::show();
+
+
+//    populationStatistics(posteriors);
+//    std::cout << "\n";
 
     for (int i = 0; i < draws; ++i) {        
         prior_likelihoods(i) = 0.0;
@@ -125,11 +146,13 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
     }
 
 
+
+
     while (beta < 1){
-        std::cout << "Stage: " << std::setw(3) << stage << "    ";
-        std::cout << "Beta: " << std::fixed << std::setprecision(6) << beta << "    ";
-        std::cout << "Steps: " << std::setw(2) << n_steps << "    ";
-        std::cout << "Acc. rate: " << std::fixed << std::setprecision(6) << acc_rate << std::endl;
+//        std::cout << "Stage: " << std::setw(3) << stage << "    ";
+//        std::cout << "Beta: " << std::fixed << std::setprecision(6) << beta << "    ";
+//        std::cout << "Steps: " << std::setw(2) << n_steps << "    ";
+//        std::cout << "Acceptance rate: " << std::fixed << std::setprecision(6) << acc_rate << std::endl;
 
         double lowBeta = beta;
         double oldBeta = beta;
@@ -193,9 +216,9 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
 
 #pragma region tuning
         if (stage > 0){
-            double ave_scalings = exp(log(scalings.mean() + acc_per_chain.mean() - 0.234));
+            double ave_scalings = exp(log(scalings.mean()) + acc_per_chain.mean() - 0.234);
 
-            scalings = 0.5 * (ave_scalings + exp(scalings.log() + (acc_per_chain - 0.234)));
+            scalings = 0.5 * (ave_scalings + exp(scalings.log()) + (acc_per_chain - 0.234));
 
             if (tune_steps){
                 acc_rate = std::max(1.0 / proposed, acc_rate);
@@ -231,7 +254,9 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
         stage += 1;
     }
 
-    std::cout << "\nFinal population statistics: \n    ";
-    populationStatistics(posteriors);
+//    std::cout << "\nFinal population statistics: \n    ";
+    writer.newRow() << "Number of stage :" << stage;
+    populationStatistics(posteriors, writer);
 
+    writer.writeToFile(csvFile);
 }
