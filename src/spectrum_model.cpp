@@ -60,12 +60,12 @@ Eigen::ArrayXX<double> SpectrumModel::GenerateInitialPopulation(int nsamples, in
 
     Eigen::ArrayXX<double> priors(nsamples , nparams);
 
-    NormalDistribution x0 = NormalDistribution("x0", "normal", 0.63, 0.15);
-    NormalDistribution fwhm0 = NormalDistribution("fwhm0", "normal", 0.09, 0.04);
-    NormalDistribution int0 = NormalDistribution("int0", "normal", 2.65, 0.5);
-    NormalDistribution x1 = NormalDistribution("x1", "normal", 0.45, 0.30);
-    NormalDistribution fwhm1 = NormalDistribution("fwhm1", "normal", 0.25, 0.07);
-    NormalDistribution int1 = NormalDistribution("int1", "normal", 0.35, 0.15);
+    NormalDistribution x0 = NormalDistribution(0.63, 0.15);
+    NormalDistribution fwhm0 = NormalDistribution(0.09, 0.04);
+    NormalDistribution int0 = NormalDistribution(2.65, 0.5);
+    NormalDistribution x1 = NormalDistribution(0.45, 0.30);
+    NormalDistribution fwhm1 = NormalDistribution(0.25, 0.07);
+    NormalDistribution int1 = NormalDistribution(0.35, 0.15);
 
     InitialGuess.push_back(x0);
     InitialGuess.push_back(fwhm0);

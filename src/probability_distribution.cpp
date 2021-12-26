@@ -9,12 +9,12 @@
 double NormalDistribution::LogP(double value) {
     double piInverse = 1.0 / M_PI;
 
-    return ( - NormalDistribution::p_tau * (value - NormalDistribution::p_mean)*(value - NormalDistribution::p_mean) +
+    return ( - NormalDistribution::p_tau * (value - NormalDistribution::expected_value)*(value - NormalDistribution::expected_value) +
             log((NormalDistribution::p_tau * piInverse) * 0.5)) * 0.5;
 }
 
 Eigen::ArrayX<double> NormalDistribution::Sample(int draws, pcg32 & rng) {
-    std::normal_distribution<double> norm_dist(NormalDistribution::p_mean, NormalDistribution::p_sigma);
+    std::normal_distribution<double> norm_dist(NormalDistribution::expected_value, NormalDistribution::uncertainty);
     auto rand_fn = [&](){return norm_dist(rng);};
     Eigen::ArrayX<double> random_array = Eigen::ArrayX<double>::NullaryExpr(draws, rand_fn);
     return random_array;

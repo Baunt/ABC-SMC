@@ -12,17 +12,11 @@
 #include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 
 class ProbabilityDistribution {
-private:
-    std::string p_name;
-    std::string p_distributionType;
-
 public:
     double expected_value;
     double uncertainty;
 
-    ProbabilityDistribution(std::string name, std::string distributionType, double expectedValue, double uncertainty){
-        this->p_distributionType = distributionType;
-        this->p_name = name;
+    ProbabilityDistribution(double expectedValue, double uncertainty){
         this->expected_value = expectedValue;
         this->uncertainty = uncertainty;
     }
@@ -30,16 +24,11 @@ public:
 
 class NormalDistribution : public ProbabilityDistribution{
 private:
-    double p_sigma;
     double p_tau;
-    double p_mean;
 public:
-    NormalDistribution(std::string name, std::string distributionType, double expectedValue, double uncertainty)
-            : ProbabilityDistribution(name, distributionType, expectedValue, uncertainty) {
-        this->p_mean = expectedValue;
-        this->p_sigma =uncertainty;
-
-        this->p_tau = 1 / (p_sigma * p_sigma);
+    NormalDistribution(double expectedValue, double uncertainty)
+            : ProbabilityDistribution(expectedValue, uncertainty) {
+        this->p_tau = 1 / (uncertainty * uncertainty);
     }
 
     double LogP(double value);
