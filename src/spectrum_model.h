@@ -26,6 +26,7 @@ public:
     Eigen::ArrayX<double> Calculate(Eigen::ArrayX<double> parameters);
     double ErrorCalculation(Eigen::ArrayX<double> diffSpectrum);
     void SetPeakList(std::vector<PeakType>& peaks);
+    double PriorLikelihood(Eigen::ArrayX<double> posterior);
     Eigen::ArrayX<double> energy;
     Eigen::ArrayX<double> intensity;
 

@@ -113,13 +113,9 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
     populationStatistics(posteriors);
     std::cout << "\n";
 
-    for (int i = 0; i < draws; ++i) {        
-        prior_likelihoods(i) = 0.0;
+    for (int i = 0; i < draws; ++i) {
         Eigen::ArrayX<double> parameters = posteriors.row(i);
-        for (int j = 0; j < nparams; ++j) {        
-            prior_likelihoods(i) += spectrumModel.InitialGuess[j].LogP(parameters(j));
-        }
-
+        prior_likelihoods(i) = spectrumModel.PriorLikelihood(parameters);
         double mean_abs_error = spectrumModel.ErrorCalculation(parameters);
         likelihoods(i) = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) + log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
     }

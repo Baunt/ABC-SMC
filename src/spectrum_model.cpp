@@ -58,7 +58,7 @@ Eigen::ArrayX<double> SpectrumModel::Calculate(Eigen::ArrayX<double> parameters)
 
 Eigen::ArrayXX<double> SpectrumModel::GenerateInitialPopulation(int nsamples, int nparams, pcg32 & rng) {
 
-    Eigen::ArrayXX<double> posteriors(nsamples , nparams);
+    Eigen::ArrayXX<double> priors(nsamples , nparams);
 
     NormalDistribution x0 = NormalDistribution("x0", "normal", 0.63, 0.15);
     NormalDistribution fwhm0 = NormalDistribution("fwhm0", "normal", 0.09, 0.04);
@@ -76,10 +76,10 @@ Eigen::ArrayXX<double> SpectrumModel::GenerateInitialPopulation(int nsamples, in
 
     for (int i = 0; i < InitialGuess.size(); ++i) {
         Eigen::ArrayX<double> tmp = InitialGuess[i].Sample(nsamples, rng);
-        posteriors.col(i) = tmp;
+        priors.col(i) = tmp;
     }
 
-    return posteriors;
+    return priors;
 }
 
 void SpectrumModel::SetPeakList(std::vector<PeakType>& peakList) {
@@ -88,5 +88,16 @@ void SpectrumModel::SetPeakList(std::vector<PeakType>& peakList) {
 
 double SpectrumModel::ErrorCalculation(Eigen::ArrayX<double> parameters) {
     return ((intensity - SpectrumModel::Calculate(parameters)).cwiseAbs()).mean();
+}
+
+double SpectrumModel::PriorLikelihood(Eigen::ArrayX<double> posterior) {
+
+    double prior_likelihoods = 0.0;
+    for (int i = 0; i < posterior.size(); ++i) {
+    prior_likelihoods += InitialGuess[i].LogP(posterior(i));
+    }
+
+    std::cout << prior_likelihoods << std::endl;
+    return prior_likelihoods;
 }
 
