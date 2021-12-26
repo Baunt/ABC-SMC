@@ -41,25 +41,18 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
             Eigen::ArrayX<double> delta = deltas.col(i);
             Eigen::ArrayX<double> q_new = q_old + delta;
             simulatedSpectrum = spectrumModel.Calculate(q_new);
-            Eigen::ArrayX<double> spectrumDiffs(spectrumModel.energy.size());
-
-            spectrumDiffs = abs(spectrumModel.intensity - simulatedSpectrum);
-
-            double pl = 0.0;
-            for (int dist = 0; dist < spectrumModel.InitialGuess.capacity(); ++dist) {
-                pl += spectrumModel.InitialGuess[dist].LogP(q_new[dist]);
-            }
-            double mean_abs_error = spectrumDiffs.mean();
-            double ll = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) + log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
-            double new_tempered_logp = pl + ll * beta;
+            double priorLikelihood = spectrumModel.PriorLikelihood(q_new);
+            double mean_abs_error = spectrumModel.ErrorCalculation(simulatedSpectrum);
+            double likelihood = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) + log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
+            double new_tempered_logp = priorLikelihood + likelihood * beta;
             double delta_tempered_logp = new_tempered_logp - tempered_logp[draw];
 
             double r = log(uni_dist(rng));
             if (r < delta_tempered_logp){
                 q_old = q_new;
                 accepted += 1;
-                old_prior = pl;
-                old_likelihood = ll;
+                old_prior = priorLikelihood;
+                old_likelihood = likelihood;
                 old_tempered_logp = new_tempered_logp;
             }
         }

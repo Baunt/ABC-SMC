@@ -97,7 +97,6 @@ double SpectrumModel::PriorLikelihood(Eigen::ArrayX<double> posterior) {
     prior_likelihoods += InitialGuess[i].LogP(posterior(i));
     }
 
-    std::cout << prior_likelihoods << std::endl;
     return prior_likelihoods;
 }
 
