@@ -9,20 +9,51 @@
 #include "util.h"
 #include "../include/third-party-library/Eigen/src/Cholesky/LLT.h"
 
+void defineImportanceWeights(double beta, const Eigen::ArrayX<double>& ll_diffs, Eigen::ArrayX<double>& weights, double& newBeta, int rN){
+    double lowBeta = beta;
+    double oldBeta = beta;
+    double upBeta = 2.0;
+
+    while ((upBeta - lowBeta) > 1e-6) {
+        double sum_of_square_weights = 0;
+        newBeta = (lowBeta + upBeta) / 2.0;
+
+        weights = exp((newBeta - oldBeta) * ll_diffs);
+        weights /= weights.sum();
+        sum_of_square_weights = weights.square().sum();
+
+        int ESS = int(round(1.0 / sum_of_square_weights));
+        if (ESS == rN) {
+            break;
+        } else if (ESS < rN) {
+            upBeta = newBeta;
+        } else {
+            lowBeta = newBeta;
+        }
+    }
+
+    if (newBeta >= 1) {
+        double sum_of_weights_un = 0;
+        newBeta = 1;
+        weights = exp((newBeta - oldBeta) * ll_diffs);
+        weights /= weights.sum();
+    }
+}
+
 void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int nparams,
-                   Eigen::ArrayXX<double>& posteriors,
-                   Eigen::ArrayX<double>& likelihoods,
-                   Eigen::ArrayX<double>& tempered_logp,
-                   Eigen::ArrayX<double>& acc_per_chain,
-                   Eigen::ArrayX<double>& scalings,
-                   Eigen::LLT<Eigen::MatrixXd>& llt,
-                   Eigen::ArrayX<double>& prior_likelihoods,
+                   Eigen::ArrayXX<double> &posteriors,
+                   Eigen::ArrayX<double> &likelihoods,
+                   Eigen::ArrayX<double> &tempered_logp,
+                   Eigen::ArrayX<double> &acc_per_chain,
+                   Eigen::ArrayX<double> &scalings,
+                   Eigen::LLT<Eigen::MatrixXd> &llt,
+                   Eigen::ArrayX<double> &prior_likelihoods,
                    SpectrumModel spectrumModel,
-                   pcg32 & rng){
+                   pcg32 &rng) {
 
     std::normal_distribution<double> std_dist(0.0, 1.0); // normal distribution with mu=0, sigma=1
     std::uniform_real_distribution<double> uni_dist(0.0, 1.0); // uniform ditribution between: 0 <= r < 1
-    auto rand_fn = [&](){return std_dist(rng);};// lambda that generates random numbers
+    auto rand_fn = [&]() { return std_dist(rng); };// lambda that generates random numbers
 
     for (int draw = 0; draw < draws; ++draw) {
         Eigen::MatrixXd random_matrix = Eigen::MatrixXd::NullaryExpr(nparams, n_steps, rand_fn);// matrix expression
@@ -43,12 +74,13 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
             simulatedSpectrum = spectrumModel.Calculate(q_new);
             double priorLikelihood = spectrumModel.PriorLikelihood(q_new);
             double mean_abs_error = spectrumModel.ErrorCalculation(simulatedSpectrum);
-            double likelihood = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) + log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
+            double likelihood = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) +
+                                 log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
             double new_tempered_logp = priorLikelihood + likelihood * beta;
             double delta_tempered_logp = new_tempered_logp - tempered_logp[draw];
 
             double r = log(uni_dist(rng));
-            if (r < delta_tempered_logp){
+            if (r < delta_tempered_logp) {
                 q_old = q_new;
                 accepted += 1;
                 old_prior = priorLikelihood;
@@ -62,8 +94,7 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
         acc_per_chain(draw) = double(accepted) / double(n_steps);
         posteriors.row(draw) = q_old;
 
-        for (int i = 0; i < nparams; ++i)
-        {
+        for (int i = 0; i < nparams; ++i) {
             posteriors(draw, i) = q_old[i];
         }
     }
@@ -77,11 +108,11 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
     int stage = 0;
     double beta = 0.0;
     int marginal_likelihood = 1;
-    double threshold=0.5;
+    double threshold = 0.5;
     double acc_rate = 1.0;
     int n_steps = 25;
-    double p_acc_rate=0.99;
-    bool tune_steps= true;
+    double p_acc_rate = 0.99;
+    bool tune_steps = true;
     int max_steps = n_steps;
     double factor = (2.38 * 2.38) / nparams;
     int proposed = draws * n_steps;
@@ -97,9 +128,9 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
 
     std::cout << "Starting population statistics: \n    ";
 
-    if (factor < 1){
+    if (factor < 1) {
         scalings = factor;
-    } else{
+    } else {
         scalings = 1;
     }
 
@@ -110,54 +141,24 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
         Eigen::ArrayX<double> parameters = posteriors.row(i);
         prior_likelihoods(i) = spectrumModel.PriorLikelihood(parameters);
         double mean_abs_error = spectrumModel.ErrorCalculation(parameters);
-        likelihoods(i) = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) + log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
+        likelihoods(i) = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) +
+                          log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
     }
 
 
-    while (beta < 1){
+    while (beta < 1) {
         std::cout << "Stage: " << std::setw(3) << stage << "    ";
         std::cout << "Beta: " << std::fixed << std::setprecision(6) << beta << "    ";
         std::cout << "Steps: " << std::setw(2) << n_steps << "    ";
         std::cout << "Acc. rate: " << std::fixed << std::setprecision(6) << acc_rate << std::endl;
 
-        double lowBeta = beta;
-        double oldBeta = beta;
-        double upBeta = 2.0;
-        double newBeta;
-
-        int rN = int(round(likelihoods.size() * threshold));
-
-        Eigen::ArrayX<double> ll_diffs = likelihoods - likelihoods.maxCoeff();
-
 #pragma region importance_weights
+        int rN = int(round(likelihoods.size() * threshold));
+        Eigen::ArrayX<double> ll_diffs = likelihoods - likelihoods.maxCoeff();
         Eigen::ArrayX<double> weights(ll_diffs.size());
+        double newBeta = 0.0;
 
-        while ((upBeta - lowBeta) > 1e-6 ){
-            double sum_of_square_weights = 0;
-            newBeta = (lowBeta + upBeta) / 2.0;
-
-            weights = exp((newBeta - oldBeta) * ll_diffs);
-            weights /= weights.sum();
-            sum_of_square_weights = weights.square().sum();
-
-            int ESS = int(round(1.0 / sum_of_square_weights));
-            if (ESS == rN){
-                break;
-            }
-            else if(ESS < rN){
-                upBeta = newBeta;
-            }
-            else{
-                lowBeta = newBeta;
-            }
-        }
-
-        if (newBeta >= 1){
-            double sum_of_weights_un = 0;
-            newBeta = 1;
-            weights = exp((newBeta - oldBeta) * ll_diffs);
-            weights /= weights.sum();
-        }
+        defineImportanceWeights(beta, ll_diffs, weights, newBeta, rN);
 
         beta = newBeta;
 #pragma endregion importance_weights
@@ -181,12 +182,12 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
 #pragma endregion resampling
 
 #pragma region tuning
-        if (stage > 0){
+        if (stage > 0) {
             double ave_scalings = exp(log(scalings.mean() + acc_per_chain.mean() - 0.234));
 
             scalings = 0.5 * (ave_scalings + exp(scalings.log() + (acc_per_chain - 0.234)));
 
-            if (tune_steps){
+            if (tune_steps) {
                 acc_rate = std::max(1.0 / proposed, acc_rate);
                 int t = (int) round((log(1.0 - p_acc_rate) / log(1.0 - acc_rate)));
                 n_steps = std::min(max_steps, std::max(2, t));
@@ -210,12 +211,12 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
                       scalings,
                       llt,
                       prior_likelihoods,
-                      spectrumModel, 
+                      spectrumModel,
                       rng);
 
         acc_rate = acc_per_chain.mean();
 
-        #pragma endregion MCMC
+#pragma endregion MCMC
 
         stage += 1;
     }
