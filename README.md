@@ -37,3 +37,5 @@ Check this library. Maybe it is faster than Eigen or vanilla C++
 Extended Doxygen: [Standardese](https://github.com/standardese/standardese)
 
 Random number generator: [PCG](https://www.pcg-random.org/using-pcg-cpp.html)
+
+Mermaid: https://mermaid-js.github.io/mermaid/#/
