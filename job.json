@@ -1,0 +1,13 @@
+{
+  "nparams": 6,
+  "draws": 1000,
+  "epsilon": 0.01,
+  "threshold": 0.5,
+  "acc_rate": 1.0,
+  "n_steps": 25,
+  "p_acc_rate": 0.99,
+  "tune_steps": true,
+  "factor": 5.6644,
+  "rngSeed": 1,
+  "npix": 256
+}

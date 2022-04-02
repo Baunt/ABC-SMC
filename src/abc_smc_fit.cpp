@@ -107,7 +107,6 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
     double epsilon = 0.01;
     int stage = 0;
     double beta = 0.0;
-    int marginal_likelihood = 1;
     double threshold = 0.5;
     double acc_rate = 1.0;
     int n_steps = 25;
@@ -123,7 +122,6 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
     Eigen::ArrayX<double> prior_likelihoods(draws);
 
     Eigen::ArrayXX<double> posteriors = spectrumModel.GenerateInitialPopulation(draws, nparams, rng);
-    Eigen::ArrayXX<double> init_population = posteriors;
     Eigen::ArrayX<double> likelihoods(draws);
 
     std::cout << "Starting population statistics: \n    ";
