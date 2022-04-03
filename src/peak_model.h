@@ -28,7 +28,7 @@ public:
         this->fwhmUncertainty = fwhmUncertainty;
         this->intensity = intensity;
         this->intensityUncertainty = intensityUncertainty;
-        this->peak = peak;
+        this->peak = type;
     }
 };
 
