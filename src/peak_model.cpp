@@ -67,24 +67,24 @@ std::vector<double> divideVectorFromValue(double value, std::vector<double> vect
 }
 
 
-Eigen::ArrayX<double> PeakModel::Gaussian()
-{
-    Eigen::ArrayX<double> spectrum(p_npix);
-    double sigma = std::abs(p_fwhm) / 2.35482;
-    double c0 = p_intensity / (sigma * 2.5066283);
-    double c1 = 0.5 / (sigma * sigma);
-
-    spectrum = c0 * exp(-c1 * (p_x - p_x0) * (p_x - p_x0));
-
-    return spectrum;
-}
-
-Eigen::ArrayX<double> PeakModel::Lorenzt() {
-    Eigen::ArrayX<double> spectrum(p_npix);
-    double gamma = std::abs(p_fwhm) / 2;
-    double inverseGamma = 1.0 / gamma;
-
-    spectrum = p_intensity / (gamma * M_PI * (1.0 + ((p_x - p_x0) * inverseGamma) * ((p_x - p_x0) * inverseGamma)));
-
-    return spectrum;
-}
+//Eigen::ArrayX<double> PeakModel::Gaussian()
+//{
+//    Eigen::ArrayX<double> spectrum(p_npix);
+//    double sigma = std::abs(p_fwhm) / 2.35482;
+//    double c0 = p_intensity / (sigma * 2.5066283);
+//    double c1 = 0.5 / (sigma * sigma);
+//
+//    spectrum = c0 * exp(-c1 * (p_x - p_x0) * (p_x - p_x0));
+//
+//    return spectrum;
+//}
+//
+//Eigen::ArrayX<double> PeakModel::Lorenzt() {
+//    Eigen::ArrayX<double> spectrum(p_npix);
+//    double gamma = std::abs(p_fwhm) / 2;
+//    double inverseGamma = 1.0 / gamma;
+//
+//    spectrum = p_intensity / (gamma * M_PI * (1.0 + ((p_x - p_x0) * inverseGamma) * ((p_x - p_x0) * inverseGamma)));
+//
+//    return spectrum;
+//}

@@ -12,10 +12,9 @@ using json = nlohmann::json;
 Config JsonHandler::LoadConfigFile() {
     std::string path = "C:\\Balint\\Diplomamunka\\ABC_SMC\\configuration.json";
     std::fstream is(path);
-    if (!is)
-    {
+    if (!is) {
         std::cout << "Cannot open " << path << std::endl;
-    } else{
+    } else {
         json configurationFile;
         is >> configurationFile;
 
@@ -32,10 +31,9 @@ Config JsonHandler::LoadConfigFile() {
 
 JobData JsonHandler::LoadJobFile(std::string jobFilePath) {
     std::fstream is(jobFilePath);
-    if (!is)
-    {
+    if (!is) {
         std::cout << "Cannot open " << jobFilePath << std::endl;
-    } else{
+    } else {
 
         json jobFile;
         is >> jobFile;
@@ -61,10 +59,9 @@ JobData JsonHandler::LoadJobFile(std::string jobFilePath) {
 
 Spectrum JsonHandler::LoadMeasuredSpectrum(std::string measuredSpectrumPath) {
     std::fstream is(measuredSpectrumPath);
-    if (!is)
-    {
+    if (!is) {
         std::cout << "Cannot open " << measuredSpectrumPath << std::endl;
-    } else{
+    } else {
 
         json measuredFile;
         is >> measuredFile;
@@ -72,14 +69,54 @@ Spectrum JsonHandler::LoadMeasuredSpectrum(std::string measuredSpectrumPath) {
         Spectrum Data;
         json s = measuredFile["spectrum"];
         auto spectrumValues = s.get<std::vector<double>>();
+        //TODO different spectrum size handling
         Eigen::ArrayX<double> spectrumArray(256);
         for (int i = 0; i < spectrumValues.size(); ++i) {
             spectrumArray[i] = spectrumValues[i];
         }
         Data.spectrum = spectrumArray;
 
-        Data.peak = measuredFile[""]
+        std::vector<PeakModel> peakModelVector;
+        auto peaksGuess = measuredFile["peaksGuess"];
+        for (auto &peaks: peaksGuess.items()) {
+            std::vector<double> x;
+            std::vector<double> fwhm;
+            std::vector<double> intensity;
+            PeakType peakFromJson;
 
+            for (auto &peak: peaks.value().items()) {
+                auto peakKey = peak.key();
+                if (peakKey == "x") {
+                    x.clear();
+                    x.push_back(peak.value()[0]);
+                    x.push_back(peak.value()[1]);
+                } else if (peakKey == "fwhm") {
+                    fwhm.clear();
+                    fwhm.push_back(peak.value()[0]);
+                    fwhm.push_back(peak.value()[1]);
+                } else if (peakKey == "int") {
+                    intensity.clear();
+                    intensity.push_back(peak.value()[0]);
+                    intensity.push_back(peak.value()[1]);
+                } else if (peakKey == "peak") {
+                    if (peak.value() == "Gauss") {
+                        PeakType gauss = Gauss;
+                        peakFromJson = gauss;
+                    } else if (peak.value() == "Lorentz") {
+                        PeakType lorentz = Lorentz;
+                        peakFromJson = lorentz;
+                    } else {
+                        //TODO error handling
+                    }
+                } else {
+                    //TODO error handling
+                }
+            }
+            PeakModel pm = PeakModel(x[0], x[1], fwhm[0], fwhm[1], intensity[0], intensity[1], peakFromJson);
+            peakModelVector.push_back(pm);
+        }
+
+        Data.peakModel = peakModelVector;
         return Data;
     }
     return Spectrum();

@@ -101,22 +101,22 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
 
 }
 
-void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
-    int nparams = 6;
-    int draws = 1000;
-    double epsilon = 0.01;
-    int stage = 0;
-    double beta = 0.0;
-    double threshold = 0.5;
-    double acc_rate = 1.0;
-    int n_steps = 25;
-    double p_acc_rate = 0.99;
-    bool tune_steps = true;
-    int max_steps = n_steps;
-    double factor = (2.38 * 2.38) / nparams;
+void AbcSmcFit::Fit(SpectrumModel spectrumModel, int nparams, int draws, double epsilon, double threshold, double acc_rate, int n_steps, double p_acc_rate, bool tune_steps, double factor, int rngSeed) {
+//    int nparams = 6;
+//    int draws = 1000;
+//    double epsilon = 0.01;
+//    double threshold = 0.5;
+//    double acc_rate = 1.0;
+//    int n_steps = 25;
+//    double p_acc_rate = 0.99;
+//    bool tune_steps = true;
+//    double factor = (2.38 * 2.38) / nparams;
     int proposed = draws * n_steps;
 
-    pcg32 rng(1234);
+    int stage = 0;
+    double beta = 0.0;
+
+    pcg32 rng(rngSeed);
     Eigen::ArrayX<double> acc_per_chain(draws);
     Eigen::ArrayX<double> scalings(draws);
     Eigen::ArrayX<double> prior_likelihoods(draws);
@@ -188,7 +188,7 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel) {
             if (tune_steps) {
                 acc_rate = std::max(1.0 / proposed, acc_rate);
                 int t = (int) round((log(1.0 - p_acc_rate) / log(1.0 - acc_rate)));
-                n_steps = std::min(max_steps, std::max(2, t));
+                n_steps = std::min(n_steps, std::max(2, t));
             }
             proposed = draws * n_steps;
         }

@@ -8,29 +8,27 @@
 #include <vector>
 #include <iostream>
 #include "../include/third-party-library/Eigen/Core"
+#include "spectrum_model.h"
 
 class PeakModel {
-private:
-    Eigen::ArrayX<double> p_x;
-    double p_x0;
-    double p_fwhm;
-    double p_intensity;
-    int p_npix;
 public:
-    std::string Type;
+    PeakType peak;
+    double x;
+    double xUncertainty;
+    double fwhm;
+    double fwhmUncertainty;
+    double intensity;
+    double intensityUncertainty;
 
-    Eigen::ArrayX<double> Gaussian();
-
-    Eigen::ArrayX<double> Lorenzt();
-
-    PeakModel(const Eigen::ArrayX<double>& x, double x0, double fwhm, double intensity, int npix, std::string type)
+    PeakModel(double x, double xUncertainty, double fwhm, double fwhmUncertainty, double intensity, double intensityUncertainty, PeakType type)
     {
-        Type = type;
-        p_x = x;
-        p_x0 = x0;
-        p_fwhm = fwhm;
-        p_intensity = intensity;
-        p_npix = npix;
+        this->x = x;
+        this->xUncertainty = xUncertainty;
+        this->fwhm = fwhm;
+        this->fwhmUncertainty = fwhmUncertainty;
+        this->intensity = intensity;
+        this->intensityUncertainty = intensityUncertainty;
+        this->peak = peak;
     }
 };
 

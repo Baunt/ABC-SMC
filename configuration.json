@@ -3,5 +3,5 @@
   "resultFilePath": "./result.result",
   "measuredSpectrumPath": "C:\\Balint\\Diplomamunka\\ABC_SMC\\measurement.json",
   "loggingLevel": 1,
-  "simulated": true
+  "simulated": false
 }

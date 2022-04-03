@@ -4,15 +4,9 @@
 
 #include <vector>
 #include "../include/third-party-library/Eigen/Core"
-#include "spectrum_model.h"
+#include "peak_model.h"
 
 struct Spectrum{
     Eigen::ArrayX<double> spectrum;
-    PeakType peak;
-    double x;
-    double xUncertainty;
-    double fwhm;
-    double fwhmUncertainty;
-    double intensity;
-    double intensityUncertainty;
+    std::vector<PeakModel> peakModel;
 };
