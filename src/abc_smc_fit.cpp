@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <utility>
 #include "abc_smc_fit.h"
 #include "util.h"
 #include "../include/third-party-library/Eigen/src/Cholesky/LLT.h"
@@ -101,7 +102,44 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
 
 }
 
-void AbcSmcFit::Fit(SpectrumModel spectrumModel, int nparams, int draws, double epsilon, double threshold, double acc_rate, int n_steps, double p_acc_rate, bool tune_steps, double factor, int rngSeed) {
+Eigen::ArrayXX<double> GenerateInitialPopulation(int nsamples, int nparams, pcg32 & rng, bool simulated, std::vector<PeakModel> peakModels, SpectrumModel& spectrumModel) {
+
+    Eigen::ArrayXX<double> priors(nsamples , nparams);
+
+    if (simulated){
+        NormalDistribution x0 = NormalDistribution(0.63, 0.15);
+        NormalDistribution fwhm0 = NormalDistribution(0.09, 0.04);
+        NormalDistribution int0 = NormalDistribution(2.65, 0.5);
+        NormalDistribution x1 = NormalDistribution(0.45, 0.30);
+        NormalDistribution fwhm1 = NormalDistribution(0.25, 0.07);
+        NormalDistribution int1 = NormalDistribution(0.35, 0.15);
+
+        spectrumModel.InitialGuess.push_back(x0);
+        spectrumModel.InitialGuess.push_back(fwhm0);
+        spectrumModel.InitialGuess.push_back(int0);
+        spectrumModel.InitialGuess.push_back(x1);
+        spectrumModel.InitialGuess.push_back(fwhm1);
+        spectrumModel.InitialGuess.push_back(int1);
+    }else{
+        for (auto peakModel:peakModels) {
+            NormalDistribution xNormalDistribution = NormalDistribution(peakModel.x, peakModel.xUncertainty);
+            NormalDistribution fwhmNormalDistribution = NormalDistribution(peakModel.fwhm, peakModel.fwhmUncertainty);
+            NormalDistribution intNormalDistribution = NormalDistribution(peakModel.intensity, peakModel.intensityUncertainty);
+            spectrumModel.InitialGuess.push_back(xNormalDistribution);
+            spectrumModel.InitialGuess.push_back(fwhmNormalDistribution);
+            spectrumModel.InitialGuess.push_back(intNormalDistribution);
+        }
+    }
+
+    for (int i = 0; i < spectrumModel.InitialGuess.size(); ++i) {
+        Eigen::ArrayX<double> tmp = spectrumModel.InitialGuess[i].Sample(nsamples, rng);
+        priors.col(i) = tmp;
+    }
+
+    return priors;
+}
+
+void AbcSmcFit::Fit(SpectrumModel spectrumModel, bool simulated, int nparams, int draws, double epsilon, double threshold, double acc_rate, int n_steps, double p_acc_rate, bool tune_steps, double factor, int rngSeed, std::vector<PeakModel> peakModels) {
 //    int nparams = 6;
 //    int draws = 1000;
 //    double epsilon = 0.01;
@@ -121,7 +159,7 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel, int nparams, int draws, double 
     Eigen::ArrayX<double> scalings(draws);
     Eigen::ArrayX<double> prior_likelihoods(draws);
 
-    Eigen::ArrayXX<double> posteriors = spectrumModel.GenerateInitialPopulation(draws, nparams, rng);
+    Eigen::ArrayXX<double> posteriors = GenerateInitialPopulation(draws, nparams, rng, simulated, peakModels, spectrumModel);
     Eigen::ArrayX<double> likelihoods(draws);
 
     std::cout << "Starting population statistics: \n    ";

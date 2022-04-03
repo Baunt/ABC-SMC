@@ -7,11 +7,11 @@
 
 #include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
 #include "spectrum_model.h"
+#include "peak_model.h"
 
 class AbcSmcFit {
 public:
-    void Fit(SpectrumModel spectrumModel, int nparams, int draws, double epsilon, double threshold, double acc_rate, int n_steps, double p_acc_rate, bool tune_steps, double factor, int rngSeed);
+    void Fit(SpectrumModel spectrumModel, bool simulated, int nparams, int draws, double epsilon, double threshold, double acc_rate, int n_steps, double p_acc_rate, bool tune_steps, double factor, int rngSeed, std::vector<PeakModel> peakModels);
 };
-
 
 #endif //ABC_SMC_ALGORITHM_ABC_SMC_FIT_H

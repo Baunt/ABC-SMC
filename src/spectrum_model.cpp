@@ -56,23 +56,34 @@ Eigen::ArrayX<double> SpectrumModel::Calculate(Eigen::ArrayX<double> parameters)
     return internalSpectrum;
 }
 
-Eigen::ArrayXX<double> SpectrumModel::GenerateInitialPopulation(int nsamples, int nparams, pcg32 & rng) {
+Eigen::ArrayXX<double> SpectrumModel::GenerateInitialPopulation(int nsamples, int nparams, pcg32 & rng, bool simulated) {
 
     Eigen::ArrayXX<double> priors(nsamples , nparams);
 
-    NormalDistribution x0 = NormalDistribution(0.63, 0.15);
-    NormalDistribution fwhm0 = NormalDistribution(0.09, 0.04);
-    NormalDistribution int0 = NormalDistribution(2.65, 0.5);
-    NormalDistribution x1 = NormalDistribution(0.45, 0.30);
-    NormalDistribution fwhm1 = NormalDistribution(0.25, 0.07);
-    NormalDistribution int1 = NormalDistribution(0.35, 0.15);
+    if (simulated){
+        NormalDistribution x0 = NormalDistribution(0.63, 0.15);
+        NormalDistribution fwhm0 = NormalDistribution(0.09, 0.04);
+        NormalDistribution int0 = NormalDistribution(2.65, 0.5);
+        NormalDistribution x1 = NormalDistribution(0.45, 0.30);
+        NormalDistribution fwhm1 = NormalDistribution(0.25, 0.07);
+        NormalDistribution int1 = NormalDistribution(0.35, 0.15);
 
-    InitialGuess.push_back(x0);
-    InitialGuess.push_back(fwhm0);
-    InitialGuess.push_back(int0);
-    InitialGuess.push_back(x1);
-    InitialGuess.push_back(fwhm1);
-    InitialGuess.push_back(int1);
+        InitialGuess.push_back(x0);
+        InitialGuess.push_back(fwhm0);
+        InitialGuess.push_back(int0);
+        InitialGuess.push_back(x1);
+        InitialGuess.push_back(fwhm1);
+        InitialGuess.push_back(int1);
+    }else{
+//        for (auto peakModel:peakModels) {
+//            NormalDistribution xNormalDistribution = NormalDistribution(peakModel.x, peakModel.xUncertainty);
+//            NormalDistribution fwhmNormalDistribution = NormalDistribution(peakModel.fwhm, peakModel.fwhmUncertainty);
+//            NormalDistribution intNormalDistribution = NormalDistribution(peakModel.intensity, peakModel.intensityUncertainty);
+//            InitialGuess.push_back(xNormalDistribution);
+//            InitialGuess.push_back(fwhmNormalDistribution);
+//            InitialGuess.push_back(intNormalDistribution);
+//        }
+    }
 
     for (int i = 0; i < InitialGuess.size(); ++i) {
         Eigen::ArrayX<double> tmp = InitialGuess[i].Sample(nsamples, rng);

@@ -5,7 +5,6 @@
 #ifndef MATPLOTLIB_CPP_SPECTRUM_MODEL_H
 #define MATPLOTLIB_CPP_SPECTRUM_MODEL_H
 
-
 #include "probability_distribution.h"
 #include <map>
 #include <list>
@@ -22,7 +21,7 @@ private:
 
 public:
     std::vector<NormalDistribution> InitialGuess;
-    Eigen::ArrayXX<double> GenerateInitialPopulation(int nsamples, int nparams, pcg32 & rng);
+    Eigen::ArrayXX<double> GenerateInitialPopulation(int nsamples, int nparams, pcg32 & rng, bool simulated);
     Eigen::ArrayX<double> Calculate(Eigen::ArrayX<double> parameters);
     double ErrorCalculation(Eigen::ArrayX<double> diffSpectrum);
     void SetPeakList(std::vector<PeakType>& peaks);

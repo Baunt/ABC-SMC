@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
         Eigen::ArrayX<double> intensity = getSimulatedSpectrum(simulatedSpectrumParameters, peaks, npix, true);
         SpectrumModel spectrumModel = SpectrumModel(energy, intensity);
         spectrumModel.SetPeakList(peaks);
-        AbcSmcFit().Fit(spectrumModel, jobData.nparams, jobData.draws, jobData.epsilon, jobData.threshold, jobData.acc_rate, jobData.n_steps, jobData.p_acc_rate, jobData.tune_steps, jobData.factor, jobData.rngSeed);
+        AbcSmcFit().Fit(spectrumModel, config.simulated, jobData.nparams, jobData.draws, jobData.epsilon, jobData.threshold, jobData.acc_rate, jobData.n_steps, jobData.p_acc_rate, jobData.tune_steps, jobData.factor, jobData.rngSeed, realSpectrum.peakModel);
     } else{
         Eigen::ArrayX<double> energy = Eigen::VectorXd::LinSpaced(realSpectrum.spectrum.size(), 0, 1);
         SpectrumModel spectrumModel = SpectrumModel(energy, realSpectrum.spectrum);
@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
             peaks.push_back(peak.peak);
         }
         spectrumModel.SetPeakList(peaks);
-        AbcSmcFit().Fit(spectrumModel, jobData.nparams, jobData.draws, jobData.epsilon, jobData.threshold, jobData.acc_rate, jobData.n_steps, jobData.p_acc_rate, jobData.tune_steps, jobData.factor, jobData.rngSeed);
+        AbcSmcFit().Fit(spectrumModel, config.simulated, jobData.nparams, jobData.draws, jobData.epsilon, jobData.threshold, jobData.acc_rate, jobData.n_steps, jobData.p_acc_rate, jobData.tune_steps, jobData.factor, jobData.rngSeed, realSpectrum.peakModel);
     }
     return 0;
 }
