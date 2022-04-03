@@ -10,7 +10,7 @@
 using json = nlohmann::json;
 
 Config JsonHandler::LoadConfigFile() {
-    std::string path = "C:\\Balint\\Diplomamunka\\ABC_SMC\\configuration.json";
+    std::string path = "./configuration.json";
     std::fstream is(path);
     if (!is) {
         std::cout << "Cannot open " << path << std::endl;
