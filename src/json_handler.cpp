@@ -68,13 +68,27 @@ Spectrum JsonHandler::LoadMeasuredSpectrum(std::string measuredSpectrumPath) {
 
         Spectrum Data;
         json s = measuredFile["spectrum"];
+        json sw = measuredFile["spectrumWavelength"];
+
         auto spectrumValues = s.get<std::vector<double>>();
-        //TODO different spectrum size handling
-        Eigen::ArrayX<double> spectrumArray(256);
+        auto spectrumWavelengthValues = sw.get<std::vector<double>>();
+
+        if (spectrumValues.size() != spectrumWavelengthValues.size())
+        {
+            std::cout << "ERROR: Spectrum intensity and spectrum energy vector size must be equal! " << std::endl;
+        }
+
+        Eigen::ArrayX<double> spectrumArray(spectrumValues.size());
         for (int i = 0; i < spectrumValues.size(); ++i) {
             spectrumArray[i] = spectrumValues[i];
         }
         Data.spectrum = spectrumArray;
+
+        Eigen::ArrayX<double> spectrumWavelengthArray(spectrumValues.size());
+        for (int i = 0; i < spectrumWavelengthValues.size(); ++i) {
+            spectrumWavelengthArray[i] = spectrumWavelengthValues[i];
+        }
+        Data.spectrumWavelength = spectrumWavelengthArray;
 
         std::vector<PeakModel> peakModelVector;
         auto peaksGuess = measuredFile["peaksGuess"];

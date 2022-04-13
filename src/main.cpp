@@ -21,8 +21,7 @@ int main(int argc, char** argv) {
         spectrumModel.SetPeakList(peaks);
         AbcSmcFit().Fit(spectrumModel, config.simulated, jobData.nparams, jobData.draws, jobData.epsilon, jobData.threshold, jobData.acc_rate, jobData.n_steps, jobData.p_acc_rate, jobData.tune_steps, jobData.factor, jobData.rngSeed, realSpectrum.peakModel);
     } else{
-        Eigen::ArrayX<double> energy = Eigen::VectorXd::LinSpaced(realSpectrum.spectrum.size(), 0, 1);
-        SpectrumModel spectrumModel = SpectrumModel(energy, realSpectrum.spectrum);
+        SpectrumModel spectrumModel = SpectrumModel(realSpectrum.spectrumWavelength, realSpectrum.spectrum);
         std::vector<PeakType> peaks;
         for (auto peak:realSpectrum.peakModel) {
             peaks.push_back(peak.peak);

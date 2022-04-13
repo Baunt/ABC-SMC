@@ -8,5 +8,6 @@
 
 struct Spectrum{
     Eigen::ArrayX<double> spectrum;
+    Eigen::ArrayX<double> spectrumWavelength;
     std::vector<PeakModel> peakModel;
 };
