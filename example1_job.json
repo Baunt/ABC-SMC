@@ -1,11 +1,11 @@
 {
-  "modelType": "SpectrumModel",
-  "measuredSpectrumPath": "./measurement.json",
+  "modelType": "Example1",
+  "measuredSpectrumPath": "",
   "draws": 1000,
   "epsilon": 0.01,
   "threshold": 0.5,
   "n_steps": 25,
   "p_acc_rate": 0.99,
   "tune_steps": true,
-  "rngSeed": 1
+  "rngSeed": 1 
 }

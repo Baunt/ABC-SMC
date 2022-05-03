@@ -41,7 +41,7 @@ void defineImportanceWeights(double beta, const Eigen::ArrayX<double>& ll_diffs,
     }
 }
 
-void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int nparams,
+void AbcSmcFit::runMcMcChains(int draws, int n_steps, double epsilon, double beta, int nparams,
                    Eigen::ArrayXX<double> &posteriors,
                    Eigen::ArrayX<double> &likelihoods,
                    Eigen::ArrayX<double> &tempered_logp,
@@ -49,7 +49,6 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
                    Eigen::ArrayX<double> &scalings,
                    Eigen::LLT<Eigen::MatrixXd> &llt,
                    Eigen::ArrayX<double> &prior_likelihoods,
-                   SpectrumModel spectrumModel,
                    pcg32 &rng) {
 
     std::normal_distribution<double> std_dist(0.0, 1.0); // normal distribution with mu=0, sigma=1
@@ -72,9 +71,9 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
         for (int i = 0; i < n_steps; ++i) {
             Eigen::ArrayX<double> delta = deltas.col(i);
             Eigen::ArrayX<double> q_new = q_old + delta;
-            simulatedSpectrum = spectrumModel.Calculate(q_new);
-            double priorLikelihood = spectrumModel.PriorLikelihood(q_new);
-            double mean_abs_error = spectrumModel.ErrorCalculation(simulatedSpectrum);
+            // simulatedSpectrum = simulator.Calculate(q_new);
+            double priorLikelihood = model->PriorLikelihood(q_new);
+            double mean_abs_error  = model->ErrorCalculation(q_new);
             double likelihood = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) +
                                  log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
             double new_tempered_logp = priorLikelihood + likelihood * beta;
@@ -99,57 +98,21 @@ void runMcMcChains(int draws, int n_steps, double epsilon, double beta, int npar
             posteriors(draw, i) = q_old[i];
         }
     }
-
 }
 
-Eigen::ArrayXX<double> GenerateInitialPopulation(int nsamples, int nparams, pcg32 & rng, bool simulated, std::vector<PeakModel> peakModels, SpectrumModel& spectrumModel) {
+void AbcSmcFit::Fit(JobData job) {    
+   int nparams = model->NumberOfParameters();
+   int draws = job.draws;
+   double epsilon = job.epsilon;
+   double threshold = job.threshold;
+   double acc_rate = 1.0;
+   int n_steps = job.n_steps;
+   double p_acc_rate = 0.99;
+   bool tune_steps = job.tune_steps;
+   double factor = (2.38 * 2.38) / nparams;
+   int proposed = draws * n_steps;
 
-    Eigen::ArrayXX<double> priors(nsamples , nparams);
-
-    if (simulated){
-        NormalDistribution x0 = NormalDistribution(0.63, 0.15);
-        NormalDistribution fwhm0 = NormalDistribution(0.09, 0.04);
-        NormalDistribution int0 = NormalDistribution(2.65, 0.5);
-        NormalDistribution x1 = NormalDistribution(0.45, 0.30);
-        NormalDistribution fwhm1 = NormalDistribution(0.25, 0.07);
-        NormalDistribution int1 = NormalDistribution(0.35, 0.15);
-
-        spectrumModel.InitialGuess.push_back(x0);
-        spectrumModel.InitialGuess.push_back(fwhm0);
-        spectrumModel.InitialGuess.push_back(int0);
-        spectrumModel.InitialGuess.push_back(x1);
-        spectrumModel.InitialGuess.push_back(fwhm1);
-        spectrumModel.InitialGuess.push_back(int1);
-    }else{
-        for (auto peakModel:peakModels) {
-            NormalDistribution xNormalDistribution = NormalDistribution(peakModel.x, peakModel.xUncertainty);
-            NormalDistribution fwhmNormalDistribution = NormalDistribution(peakModel.fwhm, peakModel.fwhmUncertainty);
-            NormalDistribution intNormalDistribution = NormalDistribution(peakModel.intensity, peakModel.intensityUncertainty);
-            spectrumModel.InitialGuess.push_back(xNormalDistribution);
-            spectrumModel.InitialGuess.push_back(fwhmNormalDistribution);
-            spectrumModel.InitialGuess.push_back(intNormalDistribution);
-        }
-    }
-
-    for (int i = 0; i < spectrumModel.InitialGuess.size(); ++i) {
-        Eigen::ArrayX<double> tmp = spectrumModel.InitialGuess[i].Sample(nsamples, rng);
-        priors.col(i) = tmp;
-    }
-
-    return priors;
-}
-
-void AbcSmcFit::Fit(SpectrumModel spectrumModel, bool simulated, int nparams, int draws, double epsilon, double threshold, double acc_rate, int n_steps, double p_acc_rate, bool tune_steps, double factor, int rngSeed, std::vector<PeakModel> peakModels) {
-//    int nparams = 6;
-//    int draws = 1000;
-//    double epsilon = 0.01;
-//    double threshold = 0.5;
-//    double acc_rate = 1.0;
-//    int n_steps = 25;
-//    double p_acc_rate = 0.99;
-//    bool tune_steps = true;
-//    double factor = (2.38 * 2.38) / nparams;
-    int proposed = draws * n_steps;
+   int rngSeed = job.rngSeed;
 
     int stage = 0;
     double beta = 0.0;
@@ -159,10 +122,12 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel, bool simulated, int nparams, in
     Eigen::ArrayX<double> scalings(draws);
     Eigen::ArrayX<double> prior_likelihoods(draws);
 
-    Eigen::ArrayXX<double> posteriors = GenerateInitialPopulation(draws, nparams, rng, simulated, peakModels, spectrumModel);
+    Eigen::ArrayXX<double> posteriors = model->GenerateInitialPopulation(draws, nparams, rng);                                                
     Eigen::ArrayX<double> likelihoods(draws);
 
     std::cout << "Starting population statistics: \n    ";
+    populationStatistics(posteriors);
+    std::cout << "\n";
 
     if (factor < 1) {
         scalings = factor;
@@ -170,13 +135,10 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel, bool simulated, int nparams, in
         scalings = 1;
     }
 
-    populationStatistics(posteriors);
-    std::cout << "\n";
-
     for (int i = 0; i < draws; ++i) {
         Eigen::ArrayX<double> parameters = posteriors.row(i);
-        prior_likelihoods(i) = spectrumModel.PriorLikelihood(parameters);
-        double mean_abs_error = spectrumModel.ErrorCalculation(parameters);
+        prior_likelihoods(i) = model->PriorLikelihood(parameters);
+        double mean_abs_error = model->ErrorCalculation(parameters);
         likelihoods(i) = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) +
                           log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
     }
@@ -247,7 +209,6 @@ void AbcSmcFit::Fit(SpectrumModel spectrumModel, bool simulated, int nparams, in
                       scalings,
                       llt,
                       prior_likelihoods,
-                      spectrumModel,
                       rng);
 
         acc_rate = acc_per_chain.mean();

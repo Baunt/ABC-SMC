@@ -1,17 +1,21 @@
 //
 // Created by Bálint on 2/26/2022.
 //
+#ifndef JOBDATA
+#define JOBDATA
+
+#include <string>
 
 struct JobData{
-    int nparams;
     int draws;
     double epsilon;
     double threshold;
-    double acc_rate;
     int n_steps;
     double p_acc_rate;
     bool tune_steps;
-    double factor;
     int rngSeed;
-    int npix;
+    std::string modelType;
+    std::string inputFilePath;
 };
+
+#endif // JOBDATA

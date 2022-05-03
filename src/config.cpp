@@ -7,7 +7,6 @@
 struct Config{
     std::string jobFilePath;
     std::string resultFilePath;
-    std::string measuredSpectrumPath;
     int loggingLevel;
     bool simulated;
 };

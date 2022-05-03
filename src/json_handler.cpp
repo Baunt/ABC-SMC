@@ -21,7 +21,6 @@ Config JsonHandler::LoadConfigFile() {
         Config Config;
         Config.jobFilePath = configurationFile["jobFilePath"];
         Config.loggingLevel = configurationFile["loggingLevel"];
-        Config.measuredSpectrumPath = configurationFile["measuredSpectrumPath"];
         Config.resultFilePath = configurationFile["resultFilePath"];
         Config.simulated = configurationFile["simulated"];
         return Config;
@@ -39,19 +38,16 @@ JobData JsonHandler::LoadJobFile(std::string jobFilePath) {
         is >> jobFile;
 
         JobData JobData;
-        JobData.nparams = jobFile["nparams"];
         JobData.draws = jobFile["draws"];
         JobData.epsilon = jobFile["epsilon"];
         JobData.threshold = jobFile["threshold"];
-        JobData.acc_rate = jobFile["acc_rate"];
         JobData.n_steps = jobFile["n_steps"];
         JobData.p_acc_rate = jobFile["p_acc_rate"];
         JobData.tune_steps = jobFile["tune_steps"];
-        double factorNum = jobFile["factor"];
-        double factor = factorNum / JobData.nparams;
-        JobData.factor = factor;
         JobData.rngSeed = jobFile["rngSeed"];
-        JobData.npix = jobFile["npix"];
+        JobData.modelType = jobFile["modelType"];
+        JobData.inputFilePath = jobFile["measuredSpectrumPath"];
+
         return JobData;
     }
     return JobData();

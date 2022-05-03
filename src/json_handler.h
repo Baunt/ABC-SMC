@@ -7,7 +7,7 @@
 
 #include "config.cpp"
 #include "job_data.cpp"
-#include "spectrum.cpp"
+#include "models/spectrum.cpp"
 
 class JsonHandler {
 public:

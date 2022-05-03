@@ -1,7 +1,6 @@
 {
-  "jobFilePath": "./job.json",
+  "jobFilePath": "./example1_job.json",
   "resultFilePath": "./result.result",
-  "measuredSpectrumPath": "./measurement.json",
   "loggingLevel": 1,
-  "simulated": false
+  "simulated": true
 }

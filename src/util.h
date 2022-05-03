@@ -11,7 +11,7 @@
 #include <map>
 #include "../include/third-party-library/Eigen/Core"
 #include "../include/third-party-library/pcg-cpp/pcg_random.hpp"
-#include "spectrum_model.h"
+#include "models/spectrum_model.h"
 
 Eigen::Array<int, Eigen::Dynamic, 1> randomWeightedIndices(int draws, const Eigen::ArrayX<double>& weights, pcg32 & rng);
 
