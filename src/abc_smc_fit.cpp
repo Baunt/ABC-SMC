@@ -8,20 +8,40 @@
 #include <utility>
 #include "abc_smc_fit.h"
 #include "util.h"
+#include "models/peak_model.h"
+#include "models/simulator.h"
 #include "../include/third-party-library/Eigen/src/Cholesky/LLT.h"
 
-void defineImportanceWeights(double beta, const Eigen::ArrayX<double>& ll_diffs, Eigen::ArrayX<double>& weights, double& newBeta, int rN){
+
+void AbcSmcFit::initializeArrays(double init_scalings){
+    acc_per_chain.resize(draws, Eigen::NoChange);
+    scalings.resize(draws, Eigen::NoChange);
+    prior_likelihoods.resize(draws, Eigen::NoChange);
+    tempered_logp.resize(draws, Eigen::NoChange);
+    likelihoods.resize(draws, Eigen::NoChange);
+    importance_weights.resize(draws, Eigen::NoChange);
+    posteriors.resize(draws, Eigen::NoChange);
+    
+    acc_per_chain = 1.0;
+    scalings = init_scalings;
+}
+    
+double AbcSmcFit::determineImportanceWeights(double threshold){
+    int rN = int(round(likelihoods.size() * threshold));        
+    double newBeta = 0.0;
     double lowBeta = beta;
     double oldBeta = beta;
     double upBeta = 2.0;
+
+    Eigen::ArrayX<double> ll_diffs = likelihoods - likelihoods.maxCoeff();
 
     while ((upBeta - lowBeta) > 1e-6) {
         double sum_of_square_weights = 0;
         newBeta = (lowBeta + upBeta) / 2.0;
 
-        weights = exp((newBeta - oldBeta) * ll_diffs);
-        weights /= weights.sum();
-        sum_of_square_weights = weights.square().sum();
+        importance_weights = exp((newBeta - oldBeta) * ll_diffs);
+        importance_weights /= importance_weights.sum();
+        sum_of_square_weights = importance_weights.square().sum();
 
         int ESS = int(round(1.0 / sum_of_square_weights));
         if (ESS == rN) {
@@ -36,21 +56,25 @@ void defineImportanceWeights(double beta, const Eigen::ArrayX<double>& ll_diffs,
     if (newBeta >= 1) {
         double sum_of_weights_un = 0;
         newBeta = 1;
-        weights = exp((newBeta - oldBeta) * ll_diffs);
-        weights /= weights.sum();
+        importance_weights = exp((newBeta - oldBeta) * ll_diffs);
+        importance_weights /= importance_weights.sum();
+    }
+
+    beta = newBeta;
+    return beta;
+}
+
+void AbcSmcFit::calculateInitialLikelihoods(){
+    for (int i = 0; i < draws; ++i) {
+        Eigen::ArrayX<double> parameters = posteriors.row(i);
+        prior_likelihoods(i) = model->PriorLikelihood(parameters);
+        double mean_abs_error = model->ErrorCalculation(parameters);
+        likelihoods(i) = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) +
+                          log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
     }
 }
 
-void AbcSmcFit::runMcMcChains(int draws, int n_steps, double epsilon, double beta, int nparams,
-                   Eigen::ArrayXX<double> &posteriors,
-                   Eigen::ArrayX<double> &likelihoods,
-                   Eigen::ArrayX<double> &tempered_logp,
-                   Eigen::ArrayX<double> &acc_per_chain,
-                   Eigen::ArrayX<double> &scalings,
-                   Eigen::LLT<Eigen::MatrixXd> &llt,
-                   Eigen::ArrayX<double> &prior_likelihoods,
-                   pcg32 &rng) {
-
+void AbcSmcFit::runMcMcChains(Eigen::LLT<Eigen::MatrixXd> &llt, pcg32 &rng) {
     std::normal_distribution<double> std_dist(0.0, 1.0); // normal distribution with mu=0, sigma=1
     std::uniform_real_distribution<double> uni_dist(0.0, 1.0); // uniform ditribution between: 0 <= r < 1
     auto rand_fn = [&]() { return std_dist(rng); };// lambda that generates random numbers
@@ -71,7 +95,6 @@ void AbcSmcFit::runMcMcChains(int draws, int n_steps, double epsilon, double bet
         for (int i = 0; i < n_steps; ++i) {
             Eigen::ArrayX<double> delta = deltas.col(i);
             Eigen::ArrayX<double> q_new = q_old + delta;
-            // simulatedSpectrum = simulator.Calculate(q_new);
             double priorLikelihood = model->PriorLikelihood(q_new);
             double mean_abs_error  = model->ErrorCalculation(q_new);
             double likelihood = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) +
@@ -100,48 +123,57 @@ void AbcSmcFit::runMcMcChains(int draws, int n_steps, double epsilon, double bet
     }
 }
 
+void AbcSmcFit::resample(pcg32 & rng){
+        Eigen::ArrayX<int> resamplingIndexes = randomWeightedIndices(draws, importance_weights, rng);
+
+        posteriors = resampling_rows(posteriors, resamplingIndexes);
+        prior_likelihoods = resampling(prior_likelihoods, resamplingIndexes);
+        likelihoods = resampling(likelihoods, resamplingIndexes);
+        scalings = resampling(scalings, resamplingIndexes);
+        acc_per_chain = resampling(acc_per_chain, resamplingIndexes);
+
+        tempered_logp = prior_likelihoods + likelihoods * beta;
+}
+
+void AbcSmcFit::tuning(bool tune_steps, int & proposed, double & acc_rate, double p_acc_rate){
+    double ave_scalings = exp(log(scalings.mean() + acc_per_chain.mean() - 0.234));
+
+    scalings = 0.5 * (ave_scalings + exp(scalings.log() + (acc_per_chain - 0.234)));
+
+    if (tune_steps) {
+        acc_rate = std::max(1.0 / proposed, acc_rate);
+        int t = (int) round((log(1.0 - p_acc_rate) / log(1.0 - acc_rate)));
+        n_steps = std::min(n_steps, std::max(2, t));
+    }
+    proposed = draws * n_steps;
+}
+
 void AbcSmcFit::Fit(JobData job) {    
-   int nparams = model->NumberOfParameters();
-   int draws = job.draws;
-   double epsilon = job.epsilon;
-   double threshold = job.threshold;
-   double acc_rate = 1.0;
-   int n_steps = job.n_steps;
-   double p_acc_rate = 0.99;
-   bool tune_steps = job.tune_steps;
-   double factor = (2.38 * 2.38) / nparams;
-   int proposed = draws * n_steps;
+    // AbcSmcFit members
+    nparams = model->NumberOfParameters();
+    draws = job.draws;
+    n_steps = job.n_steps;
+    epsilon = job.epsilon;
+    beta = 0.0;
 
-   int rngSeed = job.rngSeed;
-
+    // locals
+    pcg32 rng(job.rngSeed);
+    double threshold = job.threshold;
+    double acc_rate = 1.0;    
+    double p_acc_rate = 0.99;
+    bool tune_steps = job.tune_steps;
+    int proposed = draws * n_steps;
     int stage = 0;
-    double beta = 0.0;
 
-    pcg32 rng(rngSeed);
-    Eigen::ArrayX<double> acc_per_chain(draws);
-    Eigen::ArrayX<double> scalings(draws);
-    Eigen::ArrayX<double> prior_likelihoods(draws);
 
-    Eigen::ArrayXX<double> posteriors = model->GenerateInitialPopulation(draws, nparams, rng);                                                
-    Eigen::ArrayX<double> likelihoods(draws);
+    initializeArrays(std::min(1.0, (2.38 * 2.38) / nparams));
+    posteriors = model->GenerateInitialPopulation(draws, nparams, rng); 
+    calculateInitialLikelihoods();
+
 
     std::cout << "Starting population statistics: \n    ";
     populationStatistics(posteriors);
     std::cout << "\n";
-
-    if (factor < 1) {
-        scalings = factor;
-    } else {
-        scalings = 1;
-    }
-
-    for (int i = 0; i < draws; ++i) {
-        Eigen::ArrayX<double> parameters = posteriors.row(i);
-        prior_likelihoods(i) = model->PriorLikelihood(parameters);
-        double mean_abs_error = model->ErrorCalculation(parameters);
-        likelihoods(i) = (-(mean_abs_error * mean_abs_error) / (epsilon * epsilon) +
-                          log(1.0 / (2.0 * M_PI * epsilon * epsilon))) / 2.0;
-    }
 
 
     while (beta < 1) {
@@ -150,71 +182,21 @@ void AbcSmcFit::Fit(JobData job) {
         std::cout << "Steps: " << std::setw(2) << n_steps << "    ";
         std::cout << "Acc. rate: " << std::fixed << std::setprecision(6) << acc_rate << std::endl;
 
-#pragma region importance_weights
-        int rN = int(round(likelihoods.size() * threshold));
-        Eigen::ArrayX<double> ll_diffs = likelihoods - likelihoods.maxCoeff();
-        Eigen::ArrayX<double> weights(ll_diffs.size());
-        double newBeta = 0.0;
+        beta = determineImportanceWeights(threshold);
+        resample(rng);
 
-        defineImportanceWeights(beta, ll_diffs, weights, newBeta, rN);
-
-        beta = newBeta;
-#pragma endregion importance_weights
-
-#pragma region resampling
-        Eigen::ArrayX<int> resamplingIndexes = randomWeightedIndices(draws, weights, rng);
-
-        posteriors = resampling_rows(posteriors, resamplingIndexes);
-        prior_likelihoods = resampling(prior_likelihoods, resamplingIndexes);
-        likelihoods = resampling(likelihoods, resamplingIndexes);
-        scalings = resampling(scalings, resamplingIndexes);
-        acc_per_chain = resampling(acc_per_chain, resamplingIndexes);
-
-        Eigen::ArrayX<double> tempered_logp(draws);
-        tempered_logp = prior_likelihoods + likelihoods * beta;
-
+        // calculate the covariance matrix, and it's Cholesky decomposition
         Eigen::MatrixXd centered = posteriors.rowwise() - posteriors.colwise().mean();
         Eigen::MatrixXd cov = (centered.adjoint() * centered) / double(posteriors.rows() - 1);
         Eigen::LLT<Eigen::MatrixXd> llt(cov);
 
-#pragma endregion resampling
-
-#pragma region tuning
         if (stage > 0) {
-            double ave_scalings = exp(log(scalings.mean() + acc_per_chain.mean() - 0.234));
-
-            scalings = 0.5 * (ave_scalings + exp(scalings.log() + (acc_per_chain - 0.234)));
-
-            if (tune_steps) {
-                acc_rate = std::max(1.0 / proposed, acc_rate);
-                int t = (int) round((log(1.0 - p_acc_rate) / log(1.0 - acc_rate)));
-                n_steps = std::min(n_steps, std::max(2, t));
-            }
-            proposed = draws * n_steps;
+            tuning(tune_steps, proposed, acc_rate, p_acc_rate);
         }
 
-#pragma endregion tuning
-
-#pragma region MCMC
-
-        runMcMcChains(draws,
-                      n_steps,
-                      epsilon,
-                      beta,
-                      nparams,
-                      posteriors,
-                      likelihoods,
-                      tempered_logp,
-                      acc_per_chain,
-                      scalings,
-                      llt,
-                      prior_likelihoods,
-                      rng);
+        runMcMcChains(llt, rng);
 
         acc_rate = acc_per_chain.mean();
-
-#pragma endregion MCMC
-
         stage += 1;
     }
 

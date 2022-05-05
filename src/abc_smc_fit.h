@@ -11,13 +11,23 @@
 
 class AbcSmcFit {
 private:
-    double test;
+    int draws, nparams, n_steps;
+    double beta, epsilon;
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> posteriors;
+    Eigen::Array<double, Eigen::Dynamic, 1> prior_likelihoods;
+    Eigen::Array<double, Eigen::Dynamic, 1> likelihoods;
+    Eigen::Array<double, Eigen::Dynamic, 1> scalings;
+    Eigen::Array<double, Eigen::Dynamic, 1> acc_per_chain;
+    Eigen::Array<double, Eigen::Dynamic, 1> tempered_logp;
+    Eigen::Array<double, Eigen::Dynamic, 1> importance_weights;
     std::unique_ptr<Simulator> model;
-    void runMcMcChains(int, int, double, double, int,
-                   Eigen::ArrayXX<double> &, Eigen::ArrayX<double> &,
-                   Eigen::ArrayX<double> &, Eigen::ArrayX<double> &,
-                   Eigen::ArrayX<double> &, Eigen::LLT<Eigen::MatrixXd> &,
-                   Eigen::ArrayX<double> &, pcg32 &);
+
+    void initializeArrays(double);
+    void calculateInitialLikelihoods();
+    void runMcMcChains(Eigen::LLT<Eigen::MatrixXd> &, pcg32 &);
+    void resample(pcg32 &);
+    double determineImportanceWeights(double);    
+    void tuning(bool, int &, double &, double);
 public:
     void Fit(JobData job);    
     AbcSmcFit(std::unique_ptr<Simulator> simulator) {
